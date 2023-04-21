@@ -15,11 +15,25 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
+  height: 50px;
 }
 
 .score {
   margin: 10px;
   font-size: 25px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  visibility: visible;
+}
+
+.score-square{
+  height: 50px;
+  font-size: 25px;
+  width: 50px;
+  align-items: center;
+  justify-content: center;
+  visibility: visible;
 }
 
 .board {

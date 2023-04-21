@@ -14,6 +14,7 @@ function Game() {
   const [score, setScore] = useState(0);
   const [path, setPath] = useState([]);
   const [waiting, setWaiting] = useState(false);
+  const [showScore, setShowScore] = useState(true);
 
   useEffect(() => {
     // This is executed just once, after the first render.
@@ -43,6 +44,7 @@ function Game() {
       return;
     }
     setPath(newPath);
+    setShowScore(false);
     console.log(JSON.stringify(newPath));
   }
 
@@ -71,6 +73,7 @@ function Game() {
     const pathS = JSON.stringify(path);
     const queryS = "join(" + gridS + "," + numOfColumns + "," + pathS + ", RGrids)";
     setWaiting(true);
+    setShowScore(true);
     pengine.query(queryS, (success, response) => {
       if (success) {
         setScore(score + joinResult(path, grid, numOfColumns));
@@ -98,15 +101,17 @@ function Game() {
     }
   }
 
+  const scoreOrSquare = showScore ? 
+    (<div className="score">{score}</div>) : 
+    (<Square value={joinResult(path, grid, numOfColumns)} className="score-square"/>);
+
   if (grid === null) {
     return null;
   }
   return (
     <div className="game">
-      <div className="header">
-        <div className="score">
-          <Square value={score} className="score-square"/>
-          </div>
+      <div className="header">  
+        {scoreOrSquare}
       </div>
       <Board
         grid={grid}
