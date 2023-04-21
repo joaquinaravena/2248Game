@@ -24,7 +24,6 @@ body {
   height: 50px;
   align-items: center;
   justify-content: center;
-  visibility: visible;
 }
 
 .score-square{
@@ -33,7 +32,23 @@ body {
   width: 50px;
   align-items: center;
   justify-content: center;
-  visibility: visible;
+}
+
+.collapse{
+  height: 50px;
+  width: auto;
+  align-items: center;
+  justify-content: right;
+  margin-left: 22.5%;
+  margin-top: -1%;
+  border-radius: 5px;
+  position: absolute;
+  color: white;
+  background-color: rgb(38, 38, 161);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  cursor: pointer;
+
 }
 
 .board {

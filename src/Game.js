@@ -101,6 +101,9 @@ function Game() {
     }
   }
 
+  function collapse(){
+
+  }
   const scoreOrSquare = showScore ? 
     (<div className="score">{score}</div>) : 
     (<Square value={joinResult(path, grid, numOfColumns)} className="score-square"/>);
@@ -112,6 +115,7 @@ function Game() {
     <div className="game">
       <div className="header">  
         {scoreOrSquare}
+        <button className="collapse" onClick={collapse}>colapsar</button>
       </div>
       <Board
         grid={grid}
