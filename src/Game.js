@@ -102,8 +102,16 @@ function Game() {
   }
 
   function collapse(){
-
+    const queryS = "collapse()"; //terminar
+    pengine.query(queryS, (success, responde) =>{
+      if (success){
+        
+      }else{
+        setWaiting(false);
+      }
+    } )
   }
+
   const scoreOrSquare = showScore ? 
     (<div className="score">{score}</div>) : 
     (<Square value={joinResult(path, grid, numOfColumns)} className="score-square"/>);
