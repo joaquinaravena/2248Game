@@ -14,14 +14,47 @@ maximo(6).
  * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
  */ 
 
+/*Corregir last de path, es un indice*/
 join(Grid, _NumOfColumns, _Path, RGrids):-
 	Grid = [N | Ns],
-	GridVacia = [N | NS],
-	N2 is N * 2,
+	GridEliminados = [N | Ns],
+	
+	last(Path, Num), 
+	N2 is Num * 2,
 	updateMax(log(N2)/log(2)),
-	updateMin(GridVacia),
+	updateMin(GridEliminados),
+	
 	GridNueva = [N2 | NS],
-	RGrids = [GridVacia, GridNueva].
+
+	RGrids = [GridEliminados, GridNueva].
+
+/**
+ * borrarElementos(+Grid, +Path, -GridElim)
+ * Podria devolver el ultimo (idea)
+ */
+
+borrarElementos(Grid, Path, NumColumnas, GridElim, Ultimo):-
+	Path = [[I, J], Ps],
+	Index is I*NumColumnas + J.
+	searchAndDestroy(Index, Grid, GridElim).
+
+/**
+ * 
+ */
+searchAndDestroy(Index, Lista, Ret):-
+	replace(Lista, Index, 0, Ret).
+
+/**
+ * replace(+[H|T], +I, +X, -[H|R])
+ * [H|T] es la lista de la cuál se quiere reemplazar el elemento en el índice I por X
+ * [H|R] es la lista a retornar con el elemento reemplazado por X
+ */
+
+replace([_|T], 0, X, [X|T]).
+replace([H|T], I, X, [H|R]) :-
+    I > 0,
+    NI is I - 1,
+    replace(T, NI, X, R).
 
 /**
  * squareGenerator(+Min, +Max, -Number)
@@ -59,3 +92,11 @@ updateMin(Grid):-
 find(X,[X|_]). 
 find(X,[_|Tail]):- 
   find(X,Tail). 
+
+/**
+ * last(+[X|Y], -Ult)
+ * Retorna el último elemento de una lista
+ */ 
+last([X|[]],X).
+last([X|Tail],Ult):-
+  last(Tail, Ult).
