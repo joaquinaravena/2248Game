@@ -14,35 +14,28 @@ maximo(6).
  * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
  */ 
 
-/*Corregir last de path, es un indice*/
-join(Grid, _NumOfColumns, _Path, RGrids):-
-	Grid = [N | Ns],
-	GridEliminados = [N | Ns],
-	
-	last(Path, Num), 
-	N2 is Num * 2,
-	updateMax(log(N2)/log(2)),
+join(Grid, NumOfColumns, Path, RGrids):-
+	Grid = [_ | Ns],
+	borrarElementos(Grid, Path, NumOfColumns, GridEliminados, ValorNuevo),
+	updateMax(log(ValorNuevo)/log(2)),
 	updateMin(GridEliminados),
-	
-	GridNueva = [N2 | NS],
-
+	GridNueva = [ValorNuevo | Ns],
 	RGrids = [GridEliminados, GridNueva].
 
 /**
- * borrarElementos(+Grid, +Path, -GridElim)
- * Podria devolver el ultimo (idea)
- */
-
-borrarElementos(Grid, Path, NumColumnas, GridElim, Ultimo):-
-	Path = [[I, J], Ps],
-	Index is I*NumColumnas + J.
-	searchAndDestroy(Index, Grid, GridElim).
-
-/**
+ * borrarElementos(+Grid, +Path, +NumColumnas, -GridElim, -ValorNuevo)
  * 
  */
-searchAndDestroy(Index, Lista, Ret):-
-	replace(Lista, Index, 0, Ret).
+borrarElementos(Grid, [[I,J]], NumColumnas, GridN, ValorNuevo):-
+	Index is I*NumColumnas+J,
+	nth0(Index, Grid, Value),
+    ValorNuevo is Value * 2,
+	replace(Grid, Index, ValorNuevo, GridN).
+
+borrarElementos(Grid, [[I,J]|Tail], NumColumnas, GridElim, ValorNuevo):-
+    Index is I * NumColumnas + J,
+    replace(Grid, Index, 0, GridRep),
+    borrarElementos(GridRep, Tail, NumColumnas, GridElim, ValorNuevo).
 
 /**
  * replace(+[H|T], +I, +X, -[H|R])
@@ -92,11 +85,3 @@ updateMin(Grid):-
 find(X,[X|_]). 
 find(X,[_|Tail]):- 
   find(X,Tail). 
-
-/**
- * last(+[X|Y], -Ult)
- * Retorna el último elemento de una lista
- */ 
-last([X|[]],X).
-last([X|Tail],Ult):-
-  last(Tail, Ult).
