@@ -3,11 +3,15 @@
 		join/4
 	]).
 
+
 :- dynamic minimo/1.
 minimo(1).
 
 :- dynamic maximo/1.
 maximo(6).
+
+:- dynamic pathResult/1.
+pathResult(0).
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
@@ -16,27 +20,47 @@ maximo(6).
 
 join(Grid, NumOfColumns, Path, RGrids):-
 	Grid = [_ | Ns],
-	borrarElementos(Grid, Path, NumOfColumns, GridEliminados, ValorNuevo),
-	updateMax(log(ValorNuevo)/log(2)),
+	borrarElementos(Grid, Path, NumOfColumns, GridEliminados, NewValue),
+	updateMax(log(NewValue)/log(2)),
 	updateMin(GridEliminados),
-	GridNueva = [ValorNuevo | Ns],
+	assertz(pathResult(0)),
+	GridNueva = [NewValue | Ns],
 	RGrids = [GridEliminados, GridNueva].
 
 /**
  * borrarElementos(+Grid, +Path, +NumColumnas, -GridElim, -ValorNuevo)
  * 
  */
-borrarElementos(Grid, [[I,J]], NumColumnas, GridN, ValorNuevo):-
+borrarElementos(Grid, [[I,J]], NumColumnas, GridN, Value):-
 	Index is I*NumColumnas+J,
-	nth0(Index, Grid, Value),
-    ValorNuevo is Value * 2,
-	replace(Grid, Index, ValorNuevo, GridN).
+	nth0(Index, Grid, OldValue),
+	smallerPow2GreaterOrEqualThan(OldValue, NewValue),
+  Value is NewValue,
+	replace(Grid, Index, NewValue, GridN).
 
-borrarElementos(Grid, [[I,J]|Tail], NumColumnas, GridElim, ValorNuevo):-
+borrarElementos(Grid, [[I,J]|Tail], NumColumnas, GridElim, Value):-
     Index is I * NumColumnas + J,
+		nth0(Index, Grid, OldValue),
+		updatePath(OldValue),
     replace(Grid, Index, 0, GridRep),
-    borrarElementos(GridRep, Tail, NumColumnas, GridElim, ValorNuevo).
+    borrarElementos(GridRep, Tail, NumColumnas, GridElim, Value).
 
+/**
+ * 
+ */
+smallerPow2GreaterOrEqualThan(Result, Value):-
+	Log2num = floor(log(Result)/log(2)),
+	Result is 2**Log2num,
+	Value is Result;
+	Value is 2**(Log2num+1).
+
+/**
+ * 
+ */
+updatePath(Number):-
+	retract(pathResult(Result)),
+	NewResult  is Result+Number,
+	assertz(pathResult(NewResult)).
 /**
  * replace(+[H|T], +I, +X, -[H|R])
  * [H|T] es la lista de la cuál se quiere reemplazar el elemento en el índice I por X
