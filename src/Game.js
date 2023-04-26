@@ -43,8 +43,8 @@ function Game() {
     if (waiting) {
       return;
     }
+    setShowScore(newPath.length === 0);
     setPath(newPath);
-    setShowScore(false);
     console.log(JSON.stringify(newPath));
   }
 
@@ -114,7 +114,7 @@ function Game() {
 
   const scoreOrSquare = showScore ? 
     (<div className="score">{score}</div>) : 
-    (<Square value={joinResult(path, grid, numOfColumns)} className="score-square"/>);
+    (<Square value={joinResult(path, grid, numOfColumns)} className="score"/>);
 
   if (grid === null) {
     return null;

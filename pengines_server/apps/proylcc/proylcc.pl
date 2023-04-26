@@ -10,8 +10,6 @@ minimo(1).
 :- dynamic maximo/1.
 maximo(6).
 
-:- dynamic pathResult/1.
-pathResult(0).
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
@@ -20,47 +18,48 @@ pathResult(0).
 
 join(Grid, NumOfColumns, Path, RGrids):-
 	Grid = [_ | Ns],
-	borrarElementos(Grid, Path, NumOfColumns, GridEliminados, NewValue),
+	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
 	updateMax(log(NewValue)/log(2)),
 	updateMin(GridEliminados),
-	assertz(pathResult(0)),
 	GridNueva = [NewValue | Ns],
 	RGrids = [GridEliminados, GridNueva].
 
 /**
- * borrarElementos(+Grid, +Path, +NumColumnas, -GridElim, -ValorNuevo)
- * 
+ * borrarElementos(+Grid, +Path, +NumColumnas, +TotalPath, -GridElim, -NewValue)
+ * En la lista Grid, recorre todos los elementos de la lista Path y los reemplaza por un 0, lo cuál
+ * representa un bloque vacío. Al llegar al último elemento del Path, este debe ser aumentado utilizando
+ * la función "smallerPow2GreaterOrEqualThan".
+ * NumColumnas se utiliza para calcular el índice de los elementos eliminados en la grilla.
+ * TotalPath se utiliza para mantener el resultado total de los valores recorridos en el Path.
+ * GridElim es la nueva grilla con los elementos ya eliminados, mientras que NewValue es el valor del 
+ * último bloque el cuál fue aumentado. 
  */
-borrarElementos(Grid, [[I,J]], NumColumnas, GridN, Value):-
+borrarElementos(Grid, [[I,J]], NumColumnas, TotalPath, GridElim, NewValue):-
 	Index is I*NumColumnas+J,
 	nth0(Index, Grid, OldValue),
-	smallerPow2GreaterOrEqualThan(OldValue, NewValue),
-  Value is NewValue,
-	replace(Grid, Index, NewValue, GridN).
+	NewTotal is TotalPath+OldValue,
+	smallerPow2GreaterOrEqualThan(NewTotal, NewValue),
+	replace(Grid, Index, NewValue, GridElim).
 
-borrarElementos(Grid, [[I,J]|Tail], NumColumnas, GridElim, Value):-
+borrarElementos(Grid, [[I,J]|Tail], NumColumnas, TotalPath, GridElim, NewValue):-
     Index is I * NumColumnas + J,
-		nth0(Index, Grid, OldValue),
-		updatePath(OldValue),
+	nth0(Index, Grid, OldValue),
+	NewTotal is TotalPath+OldValue,
     replace(Grid, Index, 0, GridRep),
-    borrarElementos(GridRep, Tail, NumColumnas, GridElim, Value).
+    borrarElementos(GridRep, Tail, NumColumnas, NewTotal, GridElim, NewValue).
 
 /**
- * 
+ * smallerPow2GreatorOrEqualThan(+Result, -Value)
+ * Calcula la menor potencia de 2, que sea mayor o igual al Result pasado por parámetro.
+ * Este resultado es retornado en Value
  */
 smallerPow2GreaterOrEqualThan(Result, Value):-
 	Log2num = floor(log(Result)/log(2)),
 	Result is 2**Log2num,
 	Value is Result;
+	Log2num = floor(log(Result)/log(2)),
 	Value is 2**(Log2num+1).
 
-/**
- * 
- */
-updatePath(Number):-
-	retract(pathResult(Result)),
-	NewResult  is Result+Number,
-	assertz(pathResult(NewResult)).
 /**
  * replace(+[H|T], +I, +X, -[H|R])
  * [H|T] es la lista de la cuál se quiere reemplazar el elemento en el índice I por X
@@ -89,7 +88,7 @@ squareGenerator(Min, Max, Number):-
 updateMax(Number):-
 	retract(maximo(Max)),
 	NewMax is max(Max, Number),
-	assertz(maximo(NewMax)).
+	asserta(maximo(NewMax)).
 
 /**
  * updateMin(+Grid)
@@ -100,7 +99,7 @@ updateMin(Grid):-
 	retract(minimo(Min)),
 	not(find(2**Min, Grid)),
 	NewMin is Min+1,
-	assertz(minimo(NewMin)).
+	asserta(minimo(NewMin)).
 
 /**
  * find(+X, +[Y|Tail])
