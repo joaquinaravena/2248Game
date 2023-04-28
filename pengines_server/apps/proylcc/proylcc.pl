@@ -17,12 +17,69 @@ maximo(6).
  */ 
 
 join(Grid, NumOfColumns, Path, RGrids):-
-	Grid = [_ | Ns],
 	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
 	updateMax(log(NewValue)/log(2)),
 	updateMin(GridEliminados),
-	GridNueva = [NewValue | Ns],
-	RGrids = [GridEliminados, GridNueva].
+	initializeLists([], NumOfColumns, ColumnsList),
+	gridToColumns(Grid, ColumnsList,0, NewColumnsList),
+	gravityFalls(nth0(0, NewColumnsList, List),0, NewColumnsList, ListGravity),
+	nth0(0, NewColumnsList, Element),
+	columnsToGrid(Element,0, NewColumnsList, GridGravity),
+	RGrids = [GridEliminados, GridGravity].
+
+/**
+ * efecto gravedad de cada columna, 1 bloque a la vez
+ * dividir todas las listas con otro metodo despues
+ */
+gravityFalls([], _, ColumnsList, ColumnsList).
+gravityFalls(List, IndexList, ColumnsList, GravityList):-
+	member(0, List),
+	nth0(IndexElem, List, 0),
+	eliminar_por_indice(List, IndexElem, ListElim),
+	squareGenerator(retract(minimo), retract(maximo), Value),
+	add_first(Value, ListElim, Aux),
+	replace(ColumnsList, IndexList, Aux, NewList),
+	NewIndex is IndexList+1,
+    nth0(NewIndex,ColumnsList, NextList),
+	gravityFalls(NextList, NewIndex, NewList, GravityList);
+	NewIndex is IndexList+1,
+    nth0(NewIndex,ColumnsList, NextList),
+	gravityFalls(NextList, NewIndex, ColumnsList, GravityList);
+    gravityFalls([],_,ColumnsList, GravityList).
+
+eliminar_por_indice([], _, []).
+eliminar_por_indice([_|T], 0, T).
+eliminar_por_indice([H|T], Indice, [H|Resto]) :-
+    Indice > 0,
+    Indice1 is Indice - 1,
+    eliminar_por_indice(T, Indice1, Resto).
+
+/**
+ * length puede fallar
+ */
+gridToColumns([],ColumnsList,_,ColumnsList).
+gridToColumns([H|Tail], ColumnsList, Index, NewList):-
+	nth0(Index, ColumnsList, IndexedList),
+	addLast(H, IndexedList, Aux),
+	replace(ColumnsList, Index, Aux, ReturnList),
+	length(ColumnsList, NumOfColumns),
+	NewIndex is (Index+1) mod NumOfColumns,
+	gridToColumns(Tail, ReturnList, NewIndex, NewList).
+
+columnsToGrid([], List, _, List). 
+columnsToGrid([H|Tail],ColumnsList, Index, GridList):-
+	addLast(H, GridList, UpdatedList),
+	remove(H, [H|Tail], UpdatedCurrent),
+	replace(ColumnsList, Index, UpdatedCurrent, UpdatedColumnsList),
+	NewIndex is (Index+1) mod 5,
+	nth0(Index, ColumnsList,Element),
+	columnsToGrid(Element, UpdatedColumnsList, NewIndex, UpdatedList).
+
+initializeLists(List, 0, List).
+initializeLists(List, NumofLists, ReturnList):-
+	addLast([], List, NewList),
+	Aux is NumofLists-1,
+	initializeLists(NewList, Aux, ReturnList).
 
 /**
  * borrarElementos(+Grid, +Path, +NumColumnas, +TotalPath, -GridElim, -NewValue)
@@ -34,19 +91,19 @@ join(Grid, NumOfColumns, Path, RGrids):-
  * GridElim es la nueva grilla con los elementos ya eliminados, mientras que NewValue es el valor del 
  * último bloque el cuál fue aumentado. 
  */
-borrarElementos(Grid, [[I,J]], NumColumnas, TotalPath, GridElim, NewValue):-
+borrarElementos(Grid, [[I,J]|[]], NumColumnas, TotalPath, GridElim, NewValue):-
 	Index is I*NumColumnas+J,
 	nth0(Index, Grid, OldValue),
-	NewTotal is TotalPath+OldValue,
-	smallerPow2GreaterOrEqualThan(NewTotal, NewValue),
+	NewTotalPath is TotalPath+OldValue,
+	smallerPow2GreaterOrEqualThan(NewTotalPath, NewValue),
 	replace(Grid, Index, NewValue, GridElim).
 
 borrarElementos(Grid, [[I,J]|Tail], NumColumnas, TotalPath, GridElim, NewValue):-
     Index is I * NumColumnas + J,
 	nth0(Index, Grid, OldValue),
-	NewTotal is TotalPath+OldValue,
+	NewTotalPath is TotalPath+OldValue,
     replace(Grid, Index, 0, GridRep),
-    borrarElementos(GridRep, Tail, NumColumnas, NewTotal, GridElim, NewValue).
+    borrarElementos(GridRep, Tail, NumColumnas, NewTotalPath, GridElim, NewValue).
 
 /**
  * smallerPow2GreatorOrEqualThan(+Result, -Value)
@@ -71,6 +128,7 @@ replace([H|T], I, X, [H|R]) :-
     I > 0,
     NI is I - 1,
     replace(T, NI, X, R).
+
 
 /**
  * squareGenerator(+Min, +Max, -Number)
@@ -108,3 +166,31 @@ updateMin(Grid):-
 find(X,[X|_]). 
 find(X,[_|Tail]):- 
   find(X,Tail). 
+
+/**
+ * findAll(+X, +[X|Tail], -List)
+ * Encuentra todos los elementos iguales a X dentro de la lista pasada por parámetro y los devuelve en una
+ * nueva lista List
+ */
+findAll(_,[],_). 
+findAll(X,[X|Tail], List):- 
+  addLast(X, List, NewList),
+  findAll(X,Tail, NewList). 
+
+/**
+ * addLast(+X, +[Head|Tail], -[Head|R])
+ * Agrega el elemento X al final de la lista pasada por parámetro y retorna la nueva lista.
+ */
+addLast(X,[],[X]).
+addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R). 
+
+add_first(X,[],[X]).
+add_first(X,List,[X|List]). 
+
+find(Index, Lista, Elemento, ListaDefault) :-
+    (nth0(Index, Lista, Elemento) ; Elemento = ListaDefault).
+    
+remove(X,[X|Tail],Tail).
+remove(X, [Head|Tail], [Head|New_Tail]):-
+  X \= Head, 
+  remove(X,Tail,New_Tail).
