@@ -14,29 +14,36 @@
 	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
 	
 	initializeLists([], NumOfColumns, ColumnsList),
-	gridToColumns(GridEliminados, ColumnsList,0, AuxColumnsList),
-	addLast([], AuxColumnsList, NewColumnsList),
+	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
     
 	min_list(Grid, AuxMin),
 	max_list(GridEliminados, AuxMax),
 	Min is round(log(AuxMin)/log(2)),
 	Max is round(log(AuxMax)/log(2)),
-		
-	nth0(0, NewColumnsList, FirstList),
-	gravityFalls(FirstList,0, NewColumnsList, AuxListGravity, Min, Max),
-    remove([], AuxListGravity, ListGravity),
-	nth0(0, ListGravity, Column),	
-	columnsToGrid(Column, ListGravity,0, [], GridGravity),
-	
-	
-	RGrids = [GridEliminados, GridGravity].
+	gravityFalls(GridEliminados, NewColumnsList, [], TotalGrids, Min, Max),
+	concatenar([GridEliminados], TotalGrids, RGrids).
 
+gravityFalls(Grid, _, AuxGrids, ReturnGrids, _, _):-
+    \+ member(0, Grid),
+    ReturnGrids = AuxGrids.
+gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
+	member(0, Grid),
+
+	addLast([], ColumnsList, NewColumnsList),
+	nth0(0, NewColumnsList, FirstList),
+	gravityOneSquare(FirstList,0, NewColumnsList, AuxColumnsGravity, Min, Max),
+    remove([], AuxColumnsGravity, ColumnsGravity),
+	nth0(0, ColumnsGravity, Column),	
+	columnsToGrid(Column, ColumnsGravity,0, [], GridGravity),
+
+	addLast(GridGravity, AuxGrids, NewAuxGrids),
+	gravityFalls(GridGravity, ColumnsGravity,  NewAuxGrids, ReturnGrids,Min, Max).
 /**
  * 
  */
 
-gravityFalls([], _, ColumnsList, ColumnsList,_,_).
-gravityFalls(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
+gravityOneSquare([], _, ColumnsList, ColumnsList,_,_).
+gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
     List \= [],
 	member(0, List),
 	nth0(IndexElem, List, 0),
@@ -48,12 +55,12 @@ gravityFalls(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	replace(ColumnsList, IndexOfList, Aux, NewList),
 	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
-	gravityFalls(NextList, NewIndex, NewList, GravityList, Min, NewMax);
+	gravityOneSquare(NextList, NewIndex, NewList, GravityList, Min, NewMax);
 	
     List \= [],
 	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
-	gravityFalls(NextList, NewIndex, ColumnsList, GravityList, Min, Max).
+	gravityOneSquare(NextList, NewIndex, ColumnsList, GravityList, Min, Max).
 
 
 eliminar_por_indice([], _, []).
@@ -66,7 +73,7 @@ eliminar_por_indice([H|T], Indice, [H|Resto]) :-
 /**
  * 
  */
-gridToColumns([],ColumnsList,_,ColumnsList).
+gridToColumns([],ColumnsList,_,ColumnsList).	
 gridToColumns([H|Tail], ColumnsList, Index, NewList):-
 	nth0(Index, ColumnsList, IndexedList),
 	addLast(H, IndexedList, Aux),
@@ -87,7 +94,9 @@ columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	NewIndex is (Index+1) mod NumOfColumns,
     nth0(NewIndex, ColumnsList,NewElement),
 	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
-
+/**
+ * 
+ */
 initializeLists(List, 0, List).
 initializeLists(List, NumofLists, ReturnList):-
 	addLast([], List, NewList),
@@ -188,3 +197,6 @@ remove(X,[X|Tail],Tail).
 remove(X, [Head|Tail], [Head|New_Tail]):-
   X \= Head, 
   remove(X,Tail,New_Tail).
+
+concatenar([],Ys,Ys).
+concatenar([X|Xs], Ys, [X|Zs]):- concatenar(Xs,Ys,Zs). 
