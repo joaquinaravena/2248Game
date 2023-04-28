@@ -10,28 +10,34 @@
  * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
  */ 
 
-join(Grid, NumOfColumns, Path, RGrids):-
+ join(Grid, NumOfColumns, Path, RGrids):-
 	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
 	
 	initializeLists([], NumOfColumns, ColumnsList),
-	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
-	nth0(0, NewColumnsList, FirstList),
+	gridToColumns(GridEliminados, ColumnsList,0, AuxColumnsList),
+	addLast([], AuxColumnsList, NewColumnsList),
+    
 	min_list(Grid, AuxMin),
 	max_list(GridEliminados, AuxMax),
 	Min is round(log(AuxMin)/log(2)),
-	Max is round(log(AuxMax)/log(2)),	
-	gravityFalls(FirstList,0, NewColumnsList, ListGravity, Min, Max),
-	nth0(0, ListGravity, Element),	
-	columnsToGrid(Element, ListGravity,0, [], GridGravity),
+	Max is round(log(AuxMax)/log(2)),
+		
+	nth0(0, NewColumnsList, FirstList),
+	gravityFalls(FirstList,0, NewColumnsList, AuxListGravity, Min, Max),
+    remove([], AuxListGravity, ListGravity),
+	nth0(0, ListGravity, Column),	
+	columnsToGrid(Column, ListGravity,0, [], GridGravity),
+	
 	
 	RGrids = [GridEliminados, GridGravity].
 
 /**
- * efecto gravedad de cada columna, 1 bloque a la vez
- * dividir todas las listas con otro metodo despues
+ * 
  */
+
 gravityFalls([], _, ColumnsList, ColumnsList,_,_).
 gravityFalls(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
+    List \= [],
 	member(0, List),
 	nth0(IndexElem, List, 0),
 	eliminar_por_indice(List, IndexElem, ListElim),
@@ -43,10 +49,12 @@ gravityFalls(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
 	gravityFalls(NextList, NewIndex, NewList, GravityList, Min, NewMax);
+	
+    List \= [],
 	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
-	gravityFalls(NextList, NewIndex, ColumnsList, GravityList, Min, Max);
-    gravityFalls([],_,ColumnsList, GravityList, Min, Max).
+	gravityFalls(NextList, NewIndex, ColumnsList, GravityList, Min, Max).
+
 
 eliminar_por_indice([], _, []).
 eliminar_por_indice([_|T], 0, T).
@@ -75,7 +83,8 @@ columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	addLast(H, GridList, UpdatedList),
 	remove(H, [H|Tail], UpdatedCurrent),
 	replace(ColumnsList, Index, UpdatedCurrent, UpdatedColumnsList),
-	NewIndex is (Index+1) mod 5,
+	length(ColumnsList, NumOfColumns),
+	NewIndex is (Index+1) mod NumOfColumns,
     nth0(NewIndex, ColumnsList,NewElement),
 	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
 
