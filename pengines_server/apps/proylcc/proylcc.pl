@@ -4,12 +4,6 @@
 	]).
 
 
-:- dynamic minimo/1.
-minimo(1).
-
-:- dynamic maximo/1.
-maximo(6).
-
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
@@ -18,34 +12,41 @@ maximo(6).
 
 join(Grid, NumOfColumns, Path, RGrids):-
 	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
-	updateMax(log(NewValue)/log(2)),
-	updateMin(GridEliminados),
+	
 	initializeLists([], NumOfColumns, ColumnsList),
-	gridToColumns(Grid, ColumnsList,0, NewColumnsList),
-	gravityFalls(nth0(0, NewColumnsList, List),0, NewColumnsList, ListGravity),
-	nth0(0, NewColumnsList, Element),
-	columnsToGrid(Element,0, NewColumnsList, GridGravity),
+	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
+	nth0(0, NewColumnsList, FirstList),
+	min_list(Grid, AuxMin),
+	max_list(GridEliminados, AuxMax),
+	Min is round(log(AuxMin)/log(2)),
+	Max is round(log(AuxMax)/log(2)),	
+	gravityFalls(FirstList,0, NewColumnsList, ListGravity, Min, Max),
+	nth0(0, ListGravity, Element),	
+	columnsToGrid(Element, ListGravity,0, [], GridGravity),
+	
 	RGrids = [GridEliminados, GridGravity].
 
 /**
  * efecto gravedad de cada columna, 1 bloque a la vez
  * dividir todas las listas con otro metodo despues
  */
-gravityFalls([], _, ColumnsList, ColumnsList).
-gravityFalls(List, IndexList, ColumnsList, GravityList):-
+gravityFalls([], _, ColumnsList, ColumnsList,_,_).
+gravityFalls(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	member(0, List),
 	nth0(IndexElem, List, 0),
 	eliminar_por_indice(List, IndexElem, ListElim),
-	squareGenerator(retract(minimo), retract(maximo), Value),
-	add_first(Value, ListElim, Aux),
-	replace(ColumnsList, IndexList, Aux, NewList),
-	NewIndex is IndexList+1,
+	squareGenerator(Min, Max, AuxValue),
+	Value is round(log(AuxValue)/log(2)),
+	NewMax is max(Max, Value),
+	add_first(AuxValue, ListElim, Aux),
+	replace(ColumnsList, IndexOfList, Aux, NewList),
+	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
-	gravityFalls(NextList, NewIndex, NewList, GravityList);
-	NewIndex is IndexList+1,
+	gravityFalls(NextList, NewIndex, NewList, GravityList, Min, NewMax);
+	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
-	gravityFalls(NextList, NewIndex, ColumnsList, GravityList);
-    gravityFalls([],_,ColumnsList, GravityList).
+	gravityFalls(NextList, NewIndex, ColumnsList, GravityList, Min, Max);
+    gravityFalls([],_,ColumnsList, GravityList, Min, Max).
 
 eliminar_por_indice([], _, []).
 eliminar_por_indice([_|T], 0, T).
@@ -55,7 +56,7 @@ eliminar_por_indice([H|T], Indice, [H|Resto]) :-
     eliminar_por_indice(T, Indice1, Resto).
 
 /**
- * length puede fallar
+ * 
  */
 gridToColumns([],ColumnsList,_,ColumnsList).
 gridToColumns([H|Tail], ColumnsList, Index, NewList):-
@@ -66,14 +67,17 @@ gridToColumns([H|Tail], ColumnsList, Index, NewList):-
 	NewIndex is (Index+1) mod NumOfColumns,
 	gridToColumns(Tail, ReturnList, NewIndex, NewList).
 
-columnsToGrid([], List, _, List). 
-columnsToGrid([H|Tail],ColumnsList, Index, GridList):-
+/**
+ * 
+ */
+columnsToGrid([], _, _, GridList, GridList).
+columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	addLast(H, GridList, UpdatedList),
 	remove(H, [H|Tail], UpdatedCurrent),
 	replace(ColumnsList, Index, UpdatedCurrent, UpdatedColumnsList),
 	NewIndex is (Index+1) mod 5,
-	nth0(Index, ColumnsList,Element),
-	columnsToGrid(Element, UpdatedColumnsList, NewIndex, UpdatedList).
+    nth0(NewIndex, ColumnsList,NewElement),
+	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
 
 initializeLists(List, 0, List).
 initializeLists(List, NumofLists, ReturnList):-
@@ -135,29 +139,10 @@ replace([H|T], I, X, [H|R]) :-
  * Min es la potencia de 2 más baja de la grilla, Max es la potencia de 2 más alta de la grilla y Number es
  * un número aleatorio potencia de 2 entre Min y Max. Se utiliza para generar el valor de un Square nuevo.
  */
-squareGenerator(Min, Max, Number):- 
+squareGenerator(Min, Max,Number):- 
 	random(Min, Max, Random),
 	Number is 2**Random.
 
-/**
- * updateMax(+Number)
- * Actualiza el hecho maximo, el cuál guarda la potencia de 2 más grande que se encuentra en la grilla
- */
-updateMax(Number):-
-	retract(maximo(Max)),
-	NewMax is max(Max, Number),
-	asserta(maximo(NewMax)).
-
-/**
- * updateMin(+Grid)
- *	Actualiza el hecho mínimo, el cuál guarda la potencia de 2 más chica que se encuentra en la grilla
- *  Min representa el indice de una potencia
- */ 
-updateMin(Grid):-
-	retract(minimo(Min)),
-	not(find(2**Min, Grid)),
-	NewMin is Min+1,
-	asserta(minimo(NewMin)).
 
 /**
  * find(+X, +[Y|Tail])
