@@ -19,7 +19,7 @@
 	Min is round(log(AuxMin)/log(2)),
 	Max is round(log(AuxMax)/log(2)),
 	gravityFalls(GridEliminados, NewColumnsList, [], TotalGrids, Min, Max),
-	concatenar([GridEliminados], TotalGrids, RGrids).
+	concatenate([GridEliminados], TotalGrids, RGrids).
 
 /**
  * metodo cascara de adyacent Squares cuando se toca el boton colapsar
@@ -32,29 +32,99 @@ collapse().
  * [[],[],[N-1], N,[N+1]]
  * [[],[],[N+4],[N+5],[N+6]]
  * 
- * SI C=NumOfColumns entonces:
- * [[],[],[N-C-1],[N-C],[N-C+1]]
- * [[],[],[N-1], N,[N+1]]
- * [[],[],[N+C-1],[N+C],[N+C+1]]
+ * SI C=5 y N=8 entonces:
+ * [[],[],[2],[3],[4]]
+ * [[],[],[7], 8,[9]]
+ * [[],[],[12],[13],[14]]
+ * ANDA
+ * 
+ * SI C=5 y N=9 entonces:
+ * [[],[],[],[3],[4]]
+ * [[],[],[],[8],9]
+ * [[],[],[],[13],[14]]
+ * ANDA
+ * 
+ * SI C=5 y N=4 entonces:
+ * [[],[],[],[3],4]
+ * [[],[],[],[8],[9]]
+ * [[],[],[],[],[]]
+ * ANDA
  */
 
 shellAdyacents(Grid, Index, NumOfColumns):-
-	initializeToVisit(Grid, Index, NumOfColumns, _, ToVisit).
+	initializeGroup(Grid, Index, NumOfColumns, Group).
 
 /**
- * cambiar por indices con chequeo de en que fila se encuentra 
- * probablemente necesite 8 funciones para cada Index
+ * anda para todos los casos 
  */
-initializeToVisit(Grid, Index, NumOfColumns, ActualList, ToVisit).
+initializeGroup(Grid, Index, NumOfColumns, Group):-
+	getRow(NumOfColumns, Index, 0, Row),
+	nth0(Index, Grid, Value),
+	%Up
+    UpRight is Index-NumOfColumns+1,
+	checkSameGroup(Grid, UpRight, Row-1, NumOfColumns, Value, [], UpdatedList1),
+	UpMid is Index-NumOfColumns,
+	checkSameGroup(Grid, UpMid, Row-1, NumOfColumns, Value, UpdatedList1, UpdatedList2),
+	UpLeft is Index-NumOfColumns-1,
+	checkSameGroup(Grid, UpLeft, Row-1, NumOfColumns, Value, UpdatedList2, UpdatedList3),
+	%Mid
+	MidLeft is Index-1,
+	checkSameGroup(Grid, MidLeft, Row, NumOfColumns, Value, UpdatedList3, UpdatedList4),
+	MidRight is Index+1,
+	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, UpdatedList4, UpdatedList5),
+	%Down
+	DownRight is Index+NumOfColumns+1,
+	checkSameGroup(Grid, DownRight, Row+1, NumOfColumns, Value, UpdatedList5, UpdatedList6),
+	DownMid is Index+NumOfColumns,
+	checkSameGroup(Grid, DownMid, Row+1, NumOfColumns, Value, UpdatedList6, UpdatedList7),
+	DownLeft is Index+NumOfColumns-1,
+	checkSameGroup(Grid, DownLeft, Row+1, NumOfColumns, Value, UpdatedList7, UpdatedList8),
 
+    Group=UpdatedList8.
 
+/**
+ * 
+ */
+checkSameGroup(Grid, Searched, Row, NumOfColumns, Value, ActualList, UpdatedList):-
+	checkSameRow(Row, NumOfColumns, Searched),
+	nth0(Searched, Grid, Element),
+	Value =:= Element,
+	addLast(Searched, ActualList, UpdatedList);
+	UpdatedList = ActualList.
+
+/**
+ * checkSameRow(+Row, +NumOfColumns, +Element)
+ * Chequea si Element se encuentra en la fila Row pasada por parámetro.
+ * NumOfColumns se utiliza para calcular los valores que se encuentran en dicha Row.
+ */
+checkSameRow(Row, NumOfColumns, Element):-
+	LowIndex is Row*NumOfColumns,
+	HighIndex is LowIndex+NumOfColumns-1,
+	between(LowIndex, HighIndex, Element).
+
+/**
+ * getRow(+NumOfColumns, +Index, +ActualRow, -ReturnRow)
+ * Retorna la fila a la cual pertenece un Index, utiliza NumOfColumns para calcular en que fila se encuentra,
+ * y el valor es retornado en ReturnRow.
+ */
+getRow(NumOfColumns, Index, ActualRow, ReturnRow):-
+	Index < NumOfColumns,
+	ReturnRow = ActualRow.
+
+getRow(NumOfColumns, Index, ActualRow, ReturnRow):-
+	Index >= NumOfColumns, 
+	NewIndex is Index-NumOfColumns,
+	NewRow is ActualRow+1,
+	getRow(NumOfColumns, NewIndex, NewRow, ReturnRow).
+
+/**
+ * No lo uso todavia
+ */
 adyacentSquares(Grid, Index, NumOfColumns, Value, AuxGroup, FinalGroup, Rejected):-
 	nth0(Index, Grid, Elem),
 	Value is Elem,
 	addLast(Index, Group, UpdatedGroup).
 	
-
-
 /**
  * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
  */
@@ -91,7 +161,7 @@ gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	squareGenerator(Min, Max, AuxValue),
 	Value is round(log(AuxValue)/log(2)),
 	NewMax is max(Max, Value),
-	add_first(AuxValue, ListElim, Aux),
+	addFirst(AuxValue, ListElim, Aux),
 	replace(ColumnsList, IndexOfList, Aux, NewList),
 	NewIndex is IndexOfList+1,
     nth0(NewIndex,ColumnsList, NextList),
@@ -237,8 +307,8 @@ addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R).
 /**
  * 
  */
-add_first(X,[],[X]).
-add_first(X,List,[X|List]). 
+addFirst(X,[],[X]).
+addFirst(X,List,[X|List]). 
 
 /**
  * 
@@ -266,5 +336,5 @@ removeNegatives([H|T], [H|UpdatedTail]) :-
 /**
  * 
  */
-concatenar([],Ys,Ys).
-concatenar([X|Xs], Ys, [X|Zs]):- concatenar(Xs,Ys,Zs). 
+concatenate([],Ys,Ys).
+concatenate([X|Xs], Ys, [X|Zs]):- concatenate(Xs,Ys,Zs). 
