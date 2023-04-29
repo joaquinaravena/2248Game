@@ -11,11 +11,9 @@
  */ 
 
  join(Grid, NumOfColumns, Path, RGrids):-
-	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, NewValue),
-	
+	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, _),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
-    
 	min_list(Grid, AuxMin),
 	max_list(GridEliminados, AuxMax),
 	Min is round(log(AuxMin)/log(2)),
@@ -23,31 +21,58 @@
 	gravityFalls(GridEliminados, NewColumnsList, [], TotalGrids, Min, Max),
 	concatenar([GridEliminados], TotalGrids, RGrids).
 
+/**
+ * metodo cascara de adyacent Squares cuando se toca el boton colapsar
+ */
+collapse().
+
+/**
+ * Index es un numero del 0 al 39
+ * [[],[],[N-6],[N-5],[N-4]]
+ * [[],[],[N-1], N,[N+1]]
+ * [[],[],[N+4],[N+5],[N+6]]
+ * 
+ * SI C=NumOfColumns entonces:
+ * [[],[],[N-C-1],[N-C],[N-C+1]]
+ * [[],[],[N-1], N,[N+1]]
+ * [[],[],[N+C-1],[N+C],[N+C+1]]
+ */
+
+adyacentSquares(Grid, Index, NumOfColumns, ToVisit, Group, Rejected).
+
+
+/**
+ * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
+ */
+removeLowValues(Grid, Value, UpdatedGrid).
+
+/**
+ * gravityFalls(+Grid, +ColumnsList, +AuxGrids, -ReturnGrids, +Min, +Max)
+ * metodo cascara de gravityOneSquare
+ */
 gravityFalls(Grid, _, AuxGrids, ReturnGrids, _, _):-
     \+ member(0, Grid),
     ReturnGrids = AuxGrids.
 gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 	member(0, Grid),
-
 	addLast([], ColumnsList, NewColumnsList),
 	nth0(0, NewColumnsList, FirstList),
 	gravityOneSquare(FirstList,0, NewColumnsList, AuxColumnsGravity, Min, Max),
     remove([], AuxColumnsGravity, ColumnsGravity),
 	nth0(0, ColumnsGravity, Column),	
 	columnsToGrid(Column, ColumnsGravity,0, [], GridGravity),
-
 	addLast(GridGravity, AuxGrids, NewAuxGrids),
 	gravityFalls(GridGravity, ColumnsGravity,  NewAuxGrids, ReturnGrids,Min, Max).
-/**
- * 
- */
 
+/**
+ * gravityOneSquare(+List, +IndexOfList, +ColumnsList, -GravityList, +Min, +Max)
+ */
 gravityOneSquare([], _, ColumnsList, ColumnsList,_,_).
 gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
     List \= [],
 	member(0, List),
 	nth0(IndexElem, List, 0),
-	eliminar_por_indice(List, IndexElem, ListElim),
+	removeIndex(List, IndexElem, ListElim),
 	squareGenerator(Min, Max, AuxValue),
 	Value is round(log(AuxValue)/log(2)),
 	NewMax is max(Max, Value),
@@ -63,15 +88,10 @@ gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	gravityOneSquare(NextList, NewIndex, ColumnsList, GravityList, Min, Max).
 
 
-eliminar_por_indice([], _, []).
-eliminar_por_indice([_|T], 0, T).
-eliminar_por_indice([H|T], Indice, [H|Resto]) :-
-    Indice > 0,
-    Indice1 is Indice - 1,
-    eliminar_por_indice(T, Indice1, Resto).
-
 /**
+ * gridToColumns(+[H|Tail], +ColumnsList, +Index, -NewList)
  * 
+ * ColumnsList y NewList lo mismo que columnsToGrid
  */
 gridToColumns([],ColumnsList,_,ColumnsList).	
 gridToColumns([H|Tail], ColumnsList, Index, NewList):-
@@ -83,7 +103,10 @@ gridToColumns([H|Tail], ColumnsList, Index, NewList):-
 	gridToColumns(Tail, ReturnList, NewIndex, NewList).
 
 /**
+ * columnsToGrid(+[H|Tail], +ColumnsList, +Index, +GridList, -ReturnList)
  * 
+ * GridList es utilizado para ir almacenando la grilla paso por paso, para luego ser retornada cuando la 
+ * lista inicial esté vacía.
  */
 columnsToGrid([], _, _, GridList, GridList).
 columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
@@ -94,8 +117,9 @@ columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	NewIndex is (Index+1) mod NumOfColumns,
     nth0(NewIndex, ColumnsList,NewElement),
 	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
+
 /**
- * 
+ * initializeLists(+List, +NumofLists, -ReturnList)
  */
 initializeLists(List, 0, List).
 initializeLists(List, NumofLists, ReturnList):-
@@ -136,8 +160,19 @@ smallerPow2GreaterOrEqualThan(Result, Value):-
 	Log2num = floor(log(Result)/log(2)),
 	Result is 2**Log2num,
 	Value is Result;
+
 	Log2num = floor(log(Result)/log(2)),
 	Value is 2**(Log2num+1).
+
+/**
+ * removeIndex(+[H|T], +Indice, -[H|Resto])
+ */
+removeIndex([], _, []).
+removeIndex([_|T], 0, T).
+removeIndex([H|T], Indice, [H|Resto]) :-
+    Indice > 0,
+    Indice1 is Indice - 1,
+    removeIndex(T, Indice1, Resto).
 
 /**
  * replace(+[H|T], +I, +X, -[H|R])
@@ -147,8 +182,7 @@ smallerPow2GreaterOrEqualThan(Result, Value):-
 
 replace([_|T], 0, X, [X|T]).
 replace([H|T], I, X, [H|R]) :-
-    I > 0,
-    NI is I - 1,
+    I > 0, NI is I - 1,
     replace(T, NI, X, R).
 
 
@@ -158,8 +192,7 @@ replace([H|T], I, X, [H|R]) :-
  * un número aleatorio potencia de 2 entre Min y Max. Se utiliza para generar el valor de un Square nuevo.
  */
 squareGenerator(Min, Max,Number):- 
-	random(Min, Max, Random),
-	Number is 2**Random.
+	random(Min, Max, Random), Number is 2**Random.
 
 
 /**
@@ -177,8 +210,7 @@ find(X,[_|Tail]):-
  */
 findAll(_,[],_). 
 findAll(X,[X|Tail], List):- 
-  addLast(X, List, NewList),
-  findAll(X,Tail, NewList). 
+  addLast(X, List, NewList), findAll(X,Tail, NewList). 
 
 /**
  * addLast(+X, +[Head|Tail], -[Head|R])
@@ -187,16 +219,27 @@ findAll(X,[X|Tail], List):-
 addLast(X,[],[X]).
 addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R). 
 
+/**
+ * 
+ */
 add_first(X,[],[X]).
 add_first(X,List,[X|List]). 
 
+/**
+ * 
+ */
 find(Index, Lista, Elemento, ListaDefault) :-
     (nth0(Index, Lista, Elemento) ; Elemento = ListaDefault).
-    
+
+/**
+ * 
+ */  
 remove(X,[X|Tail],Tail).
 remove(X, [Head|Tail], [Head|New_Tail]):-
-  X \= Head, 
-  remove(X,Tail,New_Tail).
+  X \= Head, remove(X,Tail,New_Tail).
 
+/**
+ * 
+ */
 concatenar([],Ys,Ys).
 concatenar([X|Xs], Ys, [X|Zs]):- concatenar(Xs,Ys,Zs). 
