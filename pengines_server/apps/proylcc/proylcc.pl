@@ -38,7 +38,21 @@ collapse().
  * [[],[],[N+C-1],[N+C],[N+C+1]]
  */
 
-adyacentSquares(Grid, Index, NumOfColumns, ToVisit, Group, Rejected).
+shellAdyacents(Grid, Index, NumOfColumns):-
+	initializeToVisit(Grid, Index, NumOfColumns, _, ToVisit).
+
+/**
+ * cambiar por indices con chequeo de en que fila se encuentra 
+ * probablemente necesite 8 funciones para cada Index
+ */
+initializeToVisit(Grid, Index, NumOfColumns, ActualList, ToVisit).
+
+
+adyacentSquares(Grid, Index, NumOfColumns, Value, AuxGroup, FinalGroup, Rejected):-
+	nth0(Index, Grid, Elem),
+	Value is Elem,
+	addLast(Index, Group, UpdatedGroup).
+	
 
 
 /**
@@ -53,6 +67,7 @@ removeLowValues(Grid, Value, UpdatedGrid).
 gravityFalls(Grid, _, AuxGrids, ReturnGrids, _, _):-
     \+ member(0, Grid),
     ReturnGrids = AuxGrids.
+
 gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 	member(0, Grid),
 	addLast([], ColumnsList, NewColumnsList),
@@ -235,9 +250,19 @@ find(Index, Lista, Elemento, ListaDefault) :-
  * 
  */  
 remove(X,[X|Tail],Tail).
-remove(X, [Head|Tail], [Head|New_Tail]):-
-  X \= Head, remove(X,Tail,New_Tail).
+remove(X, [H|Tail], [H|NewTail]):-
+  X \= H, remove(X,Tail,NewTail).
 
+/**
+ * 
+ */
+removeNegatives([], []).
+removeNegatives([H|T], UpdatedList) :-
+    H < 0,
+    removeNegatives(T, UpdatedList).
+removeNegatives([H|T], [H|UpdatedTail]) :-
+    H >= 0,
+    removeNegatives(T, UpdatedTail).
 /**
  * 
  */
