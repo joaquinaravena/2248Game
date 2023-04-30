@@ -83,7 +83,8 @@ initializeGroup(Grid, Index, NumOfColumns, Group):-
     Group=UpdatedList8.
 
 /**
- * 
+ * checkSameGroup(+Grid, +Searched, +Row, +NumOfColumns, +Value, +ActualList, -UpdatedList)
+ * Chequea si el elemento Searched pertenece al grupo correspondiente al valor Value. 
  */
 checkSameGroup(Grid, Searched, Row, NumOfColumns, Value, ActualList, UpdatedList):-
 	checkSameRow(Row, NumOfColumns, Searched),
@@ -132,7 +133,8 @@ removeLowValues(Grid, Value, UpdatedGrid).
 
 /**
  * gravityFalls(+Grid, +ColumnsList, +AuxGrids, -ReturnGrids, +Min, +Max)
- * metodo cascara de gravityOneSquare
+ * Recorre las listas correspondientes a las columnas de la grilla para aplicarle
+ * gravedad a cada bloque de las mismas.  
  */
 gravityFalls(Grid, _, AuxGrids, ReturnGrids, _, _):-
     \+ member(0, Grid),
@@ -151,6 +153,8 @@ gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 
 /**
  * gravityOneSquare(+List, +IndexOfList, +ColumnsList, -GravityList, +Min, +Max)
+ * Recorre la lista de una columna, busca si hay elementos eliminados (valor = 0),
+ * los elimina de la lista y genera un nuevo bloque en el tope de la columna. 
  */
 gravityOneSquare([], _, ColumnsList, ColumnsList,_,_).
 gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
@@ -175,8 +179,8 @@ gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 
 /**
  * gridToColumns(+[H|Tail], +ColumnsList, +Index, -NewList)
- * 
- * ColumnsList y NewList lo mismo que columnsToGrid
+ * Recibe la lista correspondiente a la grilla y genera una lista de listas,
+ * donde cada lista contiene los elementos de cada columna. 
  */
 gridToColumns([],ColumnsList,_,ColumnsList).	
 gridToColumns([H|Tail], ColumnsList, Index, NewList):-
@@ -189,7 +193,8 @@ gridToColumns([H|Tail], ColumnsList, Index, NewList):-
 
 /**
  * columnsToGrid(+[H|Tail], +ColumnsList, +Index, +GridList, -ReturnList)
- * 
+ * Inverso a GridToColums.
+ * Recibe las columnas separadas por listas y las agrupa en una única lista grilla. 
  * GridList es utilizado para ir almacenando la grilla paso por paso, para luego ser retornada cuando la 
  * lista inicial esté vacía.
  */
@@ -300,31 +305,42 @@ findAll(X,[X|Tail], List):-
 /**
  * addLast(+X, +[Head|Tail], -[Head|R])
  * Agrega el elemento X al final de la lista pasada por parámetro y retorna la nueva lista.
+ * CB: Agrega X a una lista vacia. 
+ * CR: La lista es no vacía, la recorre recursivamente hasta llegar al final y agrega X. 
  */
 addLast(X,[],[X]).
 addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R). 
 
 /**
- * 
+ * addFirst(+X, +List, -[X|List])
+ * Agrega el elemento X al principio de la lista. 
  */
 addFirst(X,[],[X]).
 addFirst(X,List,[X|List]). 
 
 /**
- * 
+ * find(+Index, +Lista, -Elemento, +ListaDefault)
+ * Busca un Elemento en una lista a partir de su índice. 
  */
 find(Index, Lista, Elemento, ListaDefault) :-
     (nth0(Index, Lista, Elemento) ; Elemento = ListaDefault).
 
 /**
- * 
+ * remove(+X,+[H|Tail],[H|NewTail])
+ * Elimina el elemento X de la lista. 
+ * CB: X es el header de la lista.
+ * CR: X se encuentra en el tail de la lista, busco X en tail. 
  */  
 remove(X,[X|Tail],Tail).
 remove(X, [H|Tail], [H|NewTail]):-
   X \= H, remove(X,Tail,NewTail).
 
 /**
- * 
+ * removeNegatives(+[H|T], -UpdatedList)
+ * Remueve todos los elementos negativos de una lista. 
+ * CB: La lista está vacía. 
+ * CR1: El header de la lista es negativo, lo elimino.
+ * CR2: El header de la lista es cero o positivo, no se elimina. 
  */
 removeNegatives([], []).
 removeNegatives([H|T], UpdatedList) :-
@@ -334,7 +350,10 @@ removeNegatives([H|T], [H|UpdatedTail]) :-
     H >= 0,
     removeNegatives(T, UpdatedTail).
 /**
- * 
+ * concatenate(+[X|Xs], +Ys, -[X|Zs])
+ * Concatena las dos listas ingresadas. 
+ * CB: la primera lista es lista vacía. 
+ * CR: la primera lista es no vacía, concateno X con Ys y concateno recursivamente Xs con Ys.  
  */
 concatenate([],Ys,Ys).
 concatenate([X|Xs], Ys, [X|Zs]):- concatenate(Xs,Ys,Zs). 
