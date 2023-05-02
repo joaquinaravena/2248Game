@@ -95,17 +95,18 @@ function Game() {
     if (restRGrids.length > 0) {
       setTimeout(() => {
         animateEffect(restRGrids);
-      }, 400);
+      }, 350);
     } else {
       setWaiting(false);
     }
   }
 
   function collapse(){
-    const queryS = "collapse()"; //terminar
-    pengine.query(queryS, (success, responde) =>{
+    const gridS = JSON.stringify(grid);
+    const queryS = "collapse("+gridS+", "+numOfColumns+", RGrids)"; 
+    pengine.query(queryS, (success, response) =>{
       if (success){
-        
+        animateEffect(response['RGrids']);
       }else{
         setWaiting(false);
       }

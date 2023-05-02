@@ -11,7 +11,9 @@
  */ 
 
  join(Grid, NumOfColumns, Path, RGrids):-
-	borrarElementos(Grid, Path, NumOfColumns, 0, GridEliminados, _),
+	pathtoIndex(Path, NumOfColumns, [], IndexPath),
+	deletePathInGrid(Grid, IndexPath, 0, GridAux, NewValue, LastIndex),
+	replace(GridAux, LastIndex, NewValue, GridEliminados),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
 	min_list(Grid, AuxMin),
@@ -22,86 +24,89 @@
 	concatenate([GridEliminados], TotalGrids, RGrids).
 
 /**
- * metodo cascara de adyacent Squares cuando se toca el boton colapsar
+ * 
  */
-collapse().
+collapse(Grid, NumOfColumns, RGrids):-
+	shellAdyacents(Grid, 0, NumOfColumns, [], ToCollapse),
+	deletePathInGrid(Grid, ToCollapse, 0, GridElim, _, _),
+	initializeLists([], NumOfColumns, ColumnsList),
+	gridToColumns(GridElim, ColumnsList, 0, NewColumnsList),
+	min_list(Grid, AuxMin),
+	max_list(Grid, AuxMax),
+	Min is round(log(AuxMin)/log(2)),
+	Max is round(log(AuxMax)/log(2))+1,
+	gravityFalls(GridElim, NewColumnsList, [], TotalGrids, Min, Max),
+	concatenate([GridElim], TotalGrids, RGrids).
 
 /**
- * Index es un numero del 0 al 39
- * [[],[],[N-6],[N-5],[N-4]]
- * [[],[],[N-1], N,[N+1]]
- * [[],[],[N+4],[N+5],[N+6]]
- * 
- * SI C=5 y N=8 entonces:
- * [[],[],[2],[3],[4]]
- * [[],[],[7], 8,[9]]
- * [[],[],[12],[13],[14]]
- * ANDA
- * 
- * SI C=5 y N=9 entonces:
- * [[],[],[],[3],[4]]
- * [[],[],[],[8],9]
- * [[],[],[],[13],[14]]
- * ANDA
- * 
- * SI C=5 y N=4 entonces:
- * [[],[],[],[3],4]
- * [[],[],[],[8],[9]]
- * [[],[],[],[],[]]
- * ANDA
+ * anda
  */
+shellAdyacents(Grid, Index,_, Visited, Visited):-
+    length(Grid, LengthGrid),
+    Index >= LengthGrid.
 
-shellAdyacents(Grid, Index, NumOfColumns):-
-	initializeGroup(Grid, Index, NumOfColumns, Group).
+shellAdyacents(Grid, Index, NumOfColumns, Visited, Return):-
+	\+ member(Index, Visited),
+	addFirst(Index, [], InitialList),
+	findGroups(Grid, [Index], NumOfColumns, InitialList, Group),
+	length(Group, LengthGroup),
+	LengthGroup > 1,	
+	concatenate(Visited, Group, UpdatedVisited),
+	NewIndex is Index+1,
+    length(Grid, LengthGrid),
+    NewIndex < LengthGrid+1,
+	shellAdyacents(Grid, NewIndex, NumOfColumns, UpdatedVisited, Return);
+
+	NewIndex is Index+1,
+    length(Grid, LengthGrid),
+    NewIndex < LengthGrid+1,
+	shellAdyacents(Grid, NewIndex, NumOfColumns, Visited, Return).
 
 /**
- * anda para todos los casos 
+ * visited tiene el indice buscado ya adentro
  */
-initializeGroup(Grid, Index, NumOfColumns, Group):-
+findGroups(_, [], _, Visited, Visited).
+findGroups(Grid, [Index|Tail], NumOfColumns, Visited, Group):-
 	getRow(NumOfColumns, Index, 0, Row),
 	nth0(Index, Grid, Value),
 	%Up
     UpRight is Index-NumOfColumns+1,
-	checkSameGroup(Grid, UpRight, Row-1, NumOfColumns, Value, [], UpdatedList1),
+	checkSameGroup(Grid, UpRight, Row-1, NumOfColumns, Value, Visited, [], UpdatedList1),
 	UpMid is Index-NumOfColumns,
-	checkSameGroup(Grid, UpMid, Row-1, NumOfColumns, Value, UpdatedList1, UpdatedList2),
+	checkSameGroup(Grid, UpMid, Row-1, NumOfColumns, Value, Visited, UpdatedList1, UpdatedList2),
 	UpLeft is Index-NumOfColumns-1,
-	checkSameGroup(Grid, UpLeft, Row-1, NumOfColumns, Value, UpdatedList2, UpdatedList3),
+	checkSameGroup(Grid, UpLeft, Row-1, NumOfColumns, Value, Visited, UpdatedList2, UpdatedList3),
 	%Mid
 	MidLeft is Index-1,
-	checkSameGroup(Grid, MidLeft, Row, NumOfColumns, Value, UpdatedList3, UpdatedList4),
+	checkSameGroup(Grid, MidLeft, Row, NumOfColumns, Value, Visited, UpdatedList3, UpdatedList4),
 	MidRight is Index+1,
-	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, UpdatedList4, UpdatedList5),
+	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, Visited, UpdatedList4, UpdatedList5),
 	%Down
 	DownRight is Index+NumOfColumns+1,
-	checkSameGroup(Grid, DownRight, Row+1, NumOfColumns, Value, UpdatedList5, UpdatedList6),
+	checkSameGroup(Grid, DownRight, Row+1, NumOfColumns, Value, Visited, UpdatedList5, UpdatedList6),
 	DownMid is Index+NumOfColumns,
-	checkSameGroup(Grid, DownMid, Row+1, NumOfColumns, Value, UpdatedList6, UpdatedList7),
+	checkSameGroup(Grid, DownMid, Row+1, NumOfColumns, Value, Visited, UpdatedList6, UpdatedList7),
 	DownLeft is Index+NumOfColumns-1,
-	checkSameGroup(Grid, DownLeft, Row+1, NumOfColumns, Value, UpdatedList7, UpdatedList8),
+	checkSameGroup(Grid, DownLeft, Row+1, NumOfColumns, Value, Visited, UpdatedList7, UpdatedList8),
 
-    Group=UpdatedList8.
-
+	concatenateWithoutReps(UpdatedList8, Visited, NewVisited),
+	concatenateWithoutReps(UpdatedList8, Tail, NewTail),
+	findGroups(Grid, NewTail, NumOfColumns, NewVisited, Group).
+    
 /**
  * checkSameGroup(+Grid, +Searched, +Row, +NumOfColumns, +Value, +ActualList, -UpdatedList)
- * Chequea si el elemento Searched pertenece al grupo correspondiente al valor Value. 
+ * Chequea si el elemento Searched pertenece al grupo correspondiente al valor Value y lo retorna en
+ * UpdatedList si pertenece al mismo grupo. 
  */
-checkSameGroup(Grid, Searched, Row, NumOfColumns, Value, ActualList, UpdatedList):-
-	checkSameRow(Row, NumOfColumns, Searched),
+checkSameGroup(Grid, Searched, Row, NumOfColumns, Value, Visited, ActualList, UpdatedList):-
+	getRow(NumOfColumns, Searched, 0, AuxRow),
+	AuxRow is Row, 
 	nth0(Searched, Grid, Element),
 	Value =:= Element,
+	\+ member(Searched, Visited),
 	addLast(Searched, ActualList, UpdatedList);
+	
 	UpdatedList = ActualList.
-
-/**
- * checkSameRow(+Row, +NumOfColumns, +Element)
- * Chequea si Element se encuentra en la fila Row pasada por parámetro.
- * NumOfColumns se utiliza para calcular los valores que se encuentran en dicha Row.
- */
-checkSameRow(Row, NumOfColumns, Element):-
-	LowIndex is Row*NumOfColumns,
-	HighIndex is LowIndex+NumOfColumns-1,
-	between(LowIndex, HighIndex, Element).
 
 /**
  * getRow(+NumOfColumns, +Index, +ActualRow, -ReturnRow)
@@ -117,14 +122,6 @@ getRow(NumOfColumns, Index, ActualRow, ReturnRow):-
 	NewIndex is Index-NumOfColumns,
 	NewRow is ActualRow+1,
 	getRow(NumOfColumns, NewIndex, NewRow, ReturnRow).
-
-/**
- * No lo uso todavia
- */
-adyacentSquares(Grid, Index, NumOfColumns, Value, AuxGroup, FinalGroup, Rejected):-
-	nth0(Index, Grid, Elem),
-	Value is Elem,
-	addLast(Index, Group, UpdatedGroup).
 	
 /**
  * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
@@ -133,12 +130,11 @@ removeLowValues(Grid, Value, UpdatedGrid).
 
 /**
  * gravityFalls(+Grid, +ColumnsList, +AuxGrids, -ReturnGrids, +Min, +Max)
- * Recorre las listas correspondientes a las columnas de la grilla para aplicarle
- * gravedad a cada bloque de las mismas.  
+ * Recorre cada columna de la lista ColumnsList para aplicarle gravedad a cada bloque de las mismas hasta
+ * que no hayan más 0 en la grilla final.  
  */
-gravityFalls(Grid, _, AuxGrids, ReturnGrids, _, _):-
-    \+ member(0, Grid),
-    ReturnGrids = AuxGrids.
+gravityFalls(Grid, _, AuxGrids, AuxGrids, _, _):-
+    \+ member(0, Grid).
 
 gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 	member(0, Grid),
@@ -154,7 +150,7 @@ gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 /**
  * gravityOneSquare(+List, +IndexOfList, +ColumnsList, -GravityList, +Min, +Max)
  * Recorre la lista de una columna, busca si hay elementos eliminados (valor = 0),
- * los elimina de la lista y genera un nuevo bloque en el tope de la columna. 
+ * los elimina de la lista y genera un nuevo bloque random en el tope de la columna. 
  */
 gravityOneSquare([], _, ColumnsList, ColumnsList,_,_).
 gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
@@ -193,7 +189,6 @@ gridToColumns([H|Tail], ColumnsList, Index, NewList):-
 
 /**
  * columnsToGrid(+[H|Tail], +ColumnsList, +Index, +GridList, -ReturnList)
- * Inverso a GridToColums.
  * Recibe las columnas separadas por listas y las agrupa en una única lista grilla. 
  * GridList es utilizado para ir almacenando la grilla paso por paso, para luego ser retornada cuando la 
  * lista inicial esté vacía.
@@ -209,37 +204,44 @@ columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
 
 /**
- * initializeLists(+List, +NumofLists, -ReturnList)
+ * initializeLists(+List, +NumOfLists, -ReturnList)
+ * Retorna una lista de NumOfLists listas vacías ([[],[],[]...])
  */
 initializeLists(List, 0, List).
-initializeLists(List, NumofLists, ReturnList):-
+initializeLists(List, NumOfLists, ReturnList):-
 	addLast([], List, NewList),
-	Aux is NumofLists-1,
+	Aux is NumOfLists-1,
 	initializeLists(NewList, Aux, ReturnList).
 
 /**
- * borrarElementos(+Grid, +Path, +NumColumnas, +TotalPath, -GridElim, -NewValue)
+ * deletePathInGrid(+Grid, +Path, +NumOfColumns, +TotalPath, -GridElim, -NewValue)
  * En la lista Grid, recorre todos los elementos de la lista Path y los reemplaza por un 0, lo cuál
  * representa un bloque vacío. Al llegar al último elemento del Path, este debe ser aumentado utilizando
  * la función "smallerPow2GreaterOrEqualThan".
- * NumColumnas se utiliza para calcular el índice de los elementos eliminados en la grilla.
  * TotalPath se utiliza para mantener el resultado total de los valores recorridos en el Path.
  * GridElim es la nueva grilla con los elementos ya eliminados, mientras que NewValue es el valor del 
  * último bloque el cuál fue aumentado. 
  */
-borrarElementos(Grid, [[I,J]|[]], NumColumnas, TotalPath, GridElim, NewValue):-
-	Index is I*NumColumnas+J,
+deletePathInGrid(Grid, [Index|[]], TotalPath, GridElim, NewValue, Index):-
 	nth0(Index, Grid, OldValue),
 	NewTotalPath is TotalPath+OldValue,
 	smallerPow2GreaterOrEqualThan(NewTotalPath, NewValue),
-	replace(Grid, Index, NewValue, GridElim).
+	replace(Grid, Index, 0, GridElim).
 
-borrarElementos(Grid, [[I,J]|Tail], NumColumnas, TotalPath, GridElim, NewValue):-
-    Index is I * NumColumnas + J,
+deletePathInGrid(Grid, [Index|Tail], TotalPath, GridElim, NewValue, LastIndex):-
 	nth0(Index, Grid, OldValue),
 	NewTotalPath is TotalPath+OldValue,
     replace(Grid, Index, 0, GridRep),
-    borrarElementos(GridRep, Tail, NumColumnas, NewTotalPath, GridElim, NewValue).
+    deletePathInGrid(GridRep, Tail, NewTotalPath, GridElim, NewValue, LastIndex).
+
+/**
+ * 
+ */
+pathtoIndex([], _, AuxList, AuxList).
+pathtoIndex([[I,J]|Tail], NumOfColumns, AuxList, Return):-
+	Index is I*NumOfColumns + J,
+	addLast(Index, AuxList, NewAuxList),
+	pathtoIndex(Tail, NumOfColumns, NewAuxList, Return).
 
 /**
  * smallerPow2GreatorOrEqualThan(+Result, -Value)
@@ -256,6 +258,7 @@ smallerPow2GreaterOrEqualThan(Result, Value):-
 
 /**
  * removeIndex(+[H|T], +Indice, -[H|Resto])
+ * Remueve el elemento en el indice pasado por parámetro y retorna la lista actualizada.
  */
 removeIndex([], _, []).
 removeIndex([_|T], 0, T).
@@ -337,8 +340,7 @@ remove(X, [H|Tail], [H|NewTail]):-
 
 /**
  * removeNegatives(+[H|T], -UpdatedList)
- * Remueve todos los elementos negativos de una lista. 
- * CB: La lista está vacía. 
+ * Remueve todos los elementos negativos de una lista hasta que la lista esté vacía. 
  * CR1: El header de la lista es negativo, lo elimino.
  * CR2: El header de la lista es cero o positivo, no se elimina. 
  */
@@ -349,11 +351,20 @@ removeNegatives([H|T], UpdatedList) :-
 removeNegatives([H|T], [H|UpdatedTail]) :-
     H >= 0,
     removeNegatives(T, UpdatedTail).
+
 /**
- * concatenate(+[X|Xs], +Ys, -[X|Zs])
+ * concatenate(+[H|T], +L2, -[X|Res])
  * Concatena las dos listas ingresadas. 
  * CB: la primera lista es lista vacía. 
- * CR: la primera lista es no vacía, concateno X con Ys y concateno recursivamente Xs con Ys.  
+ * CR: la primera lista es no vacía, concateno H con L2 y concateno recursivamente T con L2.  
  */
-concatenate([],Ys,Ys).
-concatenate([X|Xs], Ys, [X|Zs]):- concatenate(Xs,Ys,Zs). 
+concatenate([],L2,L2).
+concatenate([H|T], L2, [H|Res]):- concatenate(T,L2,Res). 
+
+concatenateWithoutReps([], L2, L2).
+concatenateWithoutReps([H|T], L2, Result) :-
+    member(H, L2),
+    concatenateWithoutReps(T, L2, Result).
+concatenateWithoutReps([H|T], L2, [H|Result]) :-
+    \+ member(H, L2),
+    concatenateWithoutReps(T, L2, Result).

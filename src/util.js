@@ -12,7 +12,7 @@ export function numberToColor(num) {
         case 1024: return "#3cb371";
         case 2048: return "#ffa500";
         case 4096: return "#f0e68c";
-        default: return "black";
+        default: return "grey";
     }
 }
 
