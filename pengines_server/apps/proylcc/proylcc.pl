@@ -23,56 +23,60 @@
 	append([GridEliminados], TotalGrids, RGrids).
 
 /**
- * deleteAllPaths(+Grid, +[H|Tail], -GridEliminated)
- * Borra todos los Path de la lista pasada por parámetro y cambia el último elemento por la potencia de 2 adecuada
- */
-deleteAllPaths(Grid, [], Grid).
-
-deleteAllPaths(Grid, [H|Tail], GridEliminated):-
- 	deletePathInGrid(Grid, H, 0, GridAux),
-	deleteAllPaths(GridAux, Tail, GridEliminated).
-
-/**
- * 
+ * collapse(+Grid, +NumOfColumns, -RGrids)
+ * Dados todos los grupos de adyacentes en la grilla utilizando shellAdyacents, 
+ * los borra y reemplaza el último valor de cada grupo por la potencia de dos correspondiente
+ * Retorna las grilla resultantes utilizando gravedad de a un bloque.
  */
 collapse(Grid, NumOfColumns, RGrids):-
 	shellAdyacents(Grid, 0, NumOfColumns, [], ToCollapse),
 	deleteAllPaths(Grid, ToCollapse, GridElim),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridElim, ColumnsList, 0, NewColumnsList),
-	min_list(Grid, AuxMin),
-	max_list(Grid, AuxMax),
-	Min is round(log(AuxMin)/log(2)),
-	Max is round(log(AuxMax)/log(2))+1,
+	min_list(Grid, AuxMin), max_list(Grid, AuxMax),
+	Min is round(log(AuxMin)/log(2)), Max is round(log(AuxMax)/log(2))+1,
 	gravityFalls(GridElim, NewColumnsList, [], TotalGrids, Min, Max),
 	append([GridElim], TotalGrids, RGrids).
 
 /**
- * anda
+ * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
+ */
+removeLowValues(Grid, Value, UpdatedGrid).
+
+/**
+ * deleteAllPaths(+Grid, +[H|Tail], -GridEliminated)
+ * Borra todos los Path de la lista pasada por parámetro.
+ */
+deleteAllPaths(Grid, [], Grid).
+deleteAllPaths(Grid, [H|Tail], GridEliminated):-
+ 	deletePathInGrid(Grid, H, 0, GridAux),
+	deleteAllPaths(GridAux, Tail, GridEliminated).
+
+/**
+ * shellAdyacents(+Grid, +Index, +NumOfColumns, +Visited, -AdyacentList)
+ * Encuentra los grupos de adyacentes para toda la grilla.
  */
 shellAdyacents(Grid, Index,_, Visited, Visited):-
-    length(Grid, LengthGrid),
-    Index >= LengthGrid.
+    length(Grid, LengthGrid), Index >= LengthGrid.
 
-shellAdyacents(Grid, Index, NumOfColumns, Visited, Return):-
+shellAdyacents(Grid, Index, NumOfColumns, Visited, AdyacentList):-
 	\+ member(Index, Visited),
 	addFirst(Index, [], InitialList),
 	findGroups(Grid, [Index], NumOfColumns, InitialList, Group),
-	length(Group, LengthGroup),
-	LengthGroup > 1,	
+	length(Group, LengthGroup), LengthGroup > 1,	
 	append(Visited, [Group], UpdatedVisited),
+  length(Grid, LengthGrid), Index < LengthGrid,
 	NewIndex is Index+1,
-    length(Grid, LengthGrid),
-    NewIndex < LengthGrid+1,
-	shellAdyacents(Grid, NewIndex, NumOfColumns, UpdatedVisited, Return);
+	shellAdyacents(Grid, NewIndex, NumOfColumns, UpdatedVisited, AdyacentList);
 
+  length(Grid, LengthGrid), Index < LengthGrid,
 	NewIndex is Index+1,
-    length(Grid, LengthGrid),
-    NewIndex < LengthGrid+1,
-	shellAdyacents(Grid, NewIndex, NumOfColumns, Visited, Return).
+	shellAdyacents(Grid, NewIndex, NumOfColumns, Visited, AdyacentList).
 
 /**
- * visited tiene el indice buscado ya adentro
+ * findGroups(+Grid, +[Index|Tail], +NumOfColumns, +Visited, -Group)
+ * Recorre la lista [Index|Tail], y busca el grupo de adyacentes del valor en la posición Index de la grilla
+ * El último valor del grupo es el que se encuentre más abajo-derecha.
  */
 findGroups(_, [], _, Visited, Visited).
 findGroups(Grid, [Index|Tail], NumOfColumns, Visited, Group):-
@@ -104,7 +108,7 @@ findGroups(Grid, [Index|Tail], NumOfColumns, Visited, Group):-
 	findGroups(Grid, NewTail, NumOfColumns, NewVisited, Group).
     
 /**
- * checkSameGroup(+Grid, +Searched, +Row, +NumOfColumns, +Value, +ActualList, -UpdatedList)
+ * checkSameGroup(+Grid, +Searched, +Row, +NumOfColumns, +Value, +Visited, +ActualList, -UpdatedList)
  * Chequea si el elemento Searched pertenece al grupo correspondiente al valor Value y lo retorna en
  * UpdatedList si pertenece al mismo grupo. 
  */
@@ -124,19 +128,11 @@ checkSameGroup(Grid, Searched, Row, NumOfColumns, Value, Visited, ActualList, Up
  * y el valor es retornado en ReturnRow.
  */
 getRow(NumOfColumns, Index, ActualRow, ReturnRow):-
-	Index < NumOfColumns,
-	ReturnRow = ActualRow.
+	Index < NumOfColumns, ReturnRow = ActualRow.
 
 getRow(NumOfColumns, Index, ActualRow, ReturnRow):-
-	Index >= NumOfColumns, 
-	NewIndex is Index-NumOfColumns,
-	NewRow is ActualRow+1,
+	Index >= NumOfColumns, NewIndex is Index-NumOfColumns, NewRow is ActualRow+1,
 	getRow(NumOfColumns, NewIndex, NewRow, ReturnRow).
-	
-/**
- * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
- */
-removeLowValues(Grid, Value, UpdatedGrid).
 
 /**
  * gravityFalls(+Grid, +ColumnsList, +AuxGrids, -ReturnGrids, +Min, +Max)
@@ -145,7 +141,6 @@ removeLowValues(Grid, Value, UpdatedGrid).
  */
 gravityFalls(Grid, _, AuxGrids, AuxGrids, _, _):-
     \+ member(0, Grid).
-
 gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
 	member(0, Grid),
 	addLast([], ColumnsList, NewColumnsList),
@@ -164,7 +159,7 @@ gravityFalls(Grid, ColumnsList, AuxGrids, ReturnGrids, Min, Max):-
  */
 gravityOneSquare([], _, ColumnsList, ColumnsList,_,_).
 gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
-    List \= [],
+  List \= [],
 	member(0, List),
 	nth0(IndexElem, List, 0),
 	removeIndex(List, IndexElem, ListElim),
@@ -174,12 +169,12 @@ gravityOneSquare(List, IndexOfList, ColumnsList, GravityList, Min, Max):-
 	addFirst(AuxValue, ListElim, Aux),
 	replace(ColumnsList, IndexOfList, Aux, NewList),
 	NewIndex is IndexOfList+1,
-    nth0(NewIndex,ColumnsList, NextList),
+  nth0(NewIndex,ColumnsList, NextList),
 	gravityOneSquare(NextList, NewIndex, NewList, GravityList, Min, NewMax);
 	
-    List \= [],
+  List \= [],
 	NewIndex is IndexOfList+1,
-    nth0(NewIndex,ColumnsList, NextList),
+  nth0(NewIndex,ColumnsList, NextList),
 	gravityOneSquare(NextList, NewIndex, ColumnsList, GravityList, Min, Max).
 
 
@@ -210,7 +205,7 @@ columnsToGrid([H|Tail], ColumnsList, Index, GridList, ReturnList):-
 	replace(ColumnsList, Index, UpdatedCurrent, UpdatedColumnsList),
 	length(ColumnsList, NumOfColumns),
 	NewIndex is (Index+1) mod NumOfColumns,
-    nth0(NewIndex, ColumnsList,NewElement),
+  nth0(NewIndex, ColumnsList,NewElement),
 	columnsToGrid(NewElement, UpdatedColumnsList, NewIndex, UpdatedList, ReturnList).
 
 /**
@@ -240,7 +235,7 @@ deletePathInGrid(Grid, [Index|Tail], TotalPath, GridElim):-
   deletePathInGrid(GridRep, Tail, NewTotalPath, GridElim).
 
 /**
- * pathtoIndex(+[[I,J]|Tail], +NumOfColumns, +AuxList, -Index)
+ * pathtoIndex(+[[I,J]|Tail], +NumOfColumns, +AuxList, -IndexList)
  * Convierte una lista de elementos de la forma [I,J] a una lista de indices.
  */
 pathtoIndex([], _, AuxList, AuxList).
@@ -291,15 +286,6 @@ squareGenerator(Min, Max,Number):-
 	random(Min, Max, Random), Number is 2**Random.
 
 /**
- * findAll(+X, +[X|Tail], -List)
- * Encuentra todos los elementos iguales a X dentro de la lista pasada por parámetro y los devuelve en una
- * nueva lista List
- */
-findAll(_,[],_). 
-findAll(X,[X|Tail], List):- 
-  addLast(X, List, NewList), findAll(X,Tail, NewList). 
-
-/**
  * addLast(+X, +[H|Tail], -[H|Remainder])
  * Agrega el elemento X al final de la lista pasada por parámetro y retorna la nueva lista.
  * CB: Agrega X a una lista vacia. 
@@ -328,21 +314,17 @@ remove(X, [H|Tail], [H|NewTail]):-
 /**
  * removeNegatives(+[H|Tail], -UpdatedList)
  * Remueve todos los elementos negativos de una lista hasta que la lista esté vacía. 
- * CR1: El header de la lista es negativo, lo elimino.
- * CR2: El header de la lista es cero o positivo, no se elimina. 
  */
 removeNegatives([], []).
 removeNegatives([H|Tail], UpdatedList) :-
-    H < 0,
-    removeNegatives(Tail, UpdatedList).
+    H < 0, removeNegatives(Tail, UpdatedList).
 removeNegatives([H|Tail], [H|UpdatedTail]) :-
-    H >= 0,
-    removeNegatives(Tail, UpdatedTail).
+    H >= 0, removeNegatives(Tail, UpdatedTail).
 
 /**
- * 
+ * concatenateWithoutReps(+[H|Tail], +L2, -[H|Result])
+ * Concatena [H|Tail] con L2, pero sin agregar los elementos de L1 que ya aparezcan en L2
  */
-
 concatenateWithoutReps([], L2, L2).
 concatenateWithoutReps([H|Tail], L2, Result) :-
     member(H, L2),
