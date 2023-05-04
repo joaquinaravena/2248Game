@@ -12,8 +12,7 @@
 
  join(Grid, NumOfColumns, Path, RGrids):-
 	pathtoIndex(Path, NumOfColumns, [], IndexPath),
-	deletePathInGrid(Grid, IndexPath, 0, GridAux, NewValue, LastIndex),
-	replace(GridAux, LastIndex, NewValue, GridEliminados),
+	deletePathInGrid(Grid, IndexPath, 0, GridEliminados),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridEliminados, ColumnsList,0, NewColumnsList),
 	min_list(Grid, AuxMin),
@@ -21,14 +20,24 @@
 	Min is round(log(AuxMin)/log(2)),
 	Max is round(log(AuxMax)/log(2)),
 	gravityFalls(GridEliminados, NewColumnsList, [], TotalGrids, Min, Max),
-	concatenate([GridEliminados], TotalGrids, RGrids).
+	append([GridEliminados], TotalGrids, RGrids).
+
+/**
+ * deleteAllPaths(+Grid, +[H|Tail], -GridEliminated)
+ * Borra todos los Path de la lista pasada por parámetro y cambia el último elemento por la potencia de 2 adecuada
+ */
+deleteAllPaths(Grid, [], Grid).
+
+deleteAllPaths(Grid, [H|Tail], GridEliminated):-
+ 	deletePathInGrid(Grid, H, 0, GridAux),
+	deleteAllPaths(GridAux, Tail, GridEliminated).
 
 /**
  * 
  */
 collapse(Grid, NumOfColumns, RGrids):-
 	shellAdyacents(Grid, 0, NumOfColumns, [], ToCollapse),
-	deletePathInGrid(Grid, ToCollapse, 0, GridElim, _, _),
+	deleteAllPaths(Grid, ToCollapse, GridElim),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridElim, ColumnsList, 0, NewColumnsList),
 	min_list(Grid, AuxMin),
@@ -36,7 +45,7 @@ collapse(Grid, NumOfColumns, RGrids):-
 	Min is round(log(AuxMin)/log(2)),
 	Max is round(log(AuxMax)/log(2))+1,
 	gravityFalls(GridElim, NewColumnsList, [], TotalGrids, Min, Max),
-	concatenate([GridElim], TotalGrids, RGrids).
+	append([GridElim], TotalGrids, RGrids).
 
 /**
  * anda
@@ -51,7 +60,7 @@ shellAdyacents(Grid, Index, NumOfColumns, Visited, Return):-
 	findGroups(Grid, [Index], NumOfColumns, InitialList, Group),
 	length(Group, LengthGroup),
 	LengthGroup > 1,	
-	concatenate(Visited, Group, UpdatedVisited),
+	append(Visited, [Group], UpdatedVisited),
 	NewIndex is Index+1,
     length(Grid, LengthGrid),
     NewIndex < LengthGrid+1,
@@ -69,6 +78,9 @@ findGroups(_, [], _, Visited, Visited).
 findGroups(Grid, [Index|Tail], NumOfColumns, Visited, Group):-
 	getRow(NumOfColumns, Index, 0, Row),
 	nth0(Index, Grid, Value),
+	%Starts at midRight
+	MidRight is Index+1,
+	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, Visited, UpdatedList4, UpdatedList5),
 	%Up
     UpRight is Index-NumOfColumns+1,
 	checkSameGroup(Grid, UpRight, Row-1, NumOfColumns, Value, Visited, [], UpdatedList1),
@@ -79,8 +91,6 @@ findGroups(Grid, [Index|Tail], NumOfColumns, Visited, Group):-
 	%Mid
 	MidLeft is Index-1,
 	checkSameGroup(Grid, MidLeft, Row, NumOfColumns, Value, Visited, UpdatedList3, UpdatedList4),
-	MidRight is Index+1,
-	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, Visited, UpdatedList4, UpdatedList5),
 	%Down
 	DownRight is Index+NumOfColumns+1,
 	checkSameGroup(Grid, DownRight, Row+1, NumOfColumns, Value, Visited, UpdatedList5, UpdatedList6),
@@ -214,39 +224,34 @@ initializeLists(List, NumOfLists, ReturnList):-
 	initializeLists(NewList, Aux, ReturnList).
 
 /**
- * deletePathInGrid(+Grid, +Path, +NumOfColumns, +TotalPath, -GridElim, -NewValue)
- * En la lista Grid, recorre todos los elementos de la lista Path y los reemplaza por un 0, lo cuál
- * representa un bloque vacío. Al llegar al último elemento del Path, este debe ser aumentado utilizando
- * la función "smallerPow2GreaterOrEqualThan".
- * TotalPath se utiliza para mantener el resultado total de los valores recorridos en el Path.
- * GridElim es la nueva grilla con los elementos ya eliminados, mientras que NewValue es el valor del 
- * último bloque el cuál fue aumentado. 
+ * deletePathInGrid(+Grid, +Path, +TotalPath, -GridElim)
+ * Borra todos los elementos del Path en Grid, y el último lo reemplaza por la potencia de dos adecuada
  */
-deletePathInGrid(Grid, [Index|[]], TotalPath, GridElim, NewValue, Index):-
+deletePathInGrid(Grid, [Index|[]], TotalPath, GridElim):-
 	nth0(Index, Grid, OldValue),
 	NewTotalPath is TotalPath+OldValue,
 	smallerPow2GreaterOrEqualThan(NewTotalPath, NewValue),
-	replace(Grid, Index, 0, GridElim).
+	replace(Grid, Index, NewValue, GridElim).
 
-deletePathInGrid(Grid, [Index|Tail], TotalPath, GridElim, NewValue, LastIndex):-
+deletePathInGrid(Grid, [Index|Tail], TotalPath, GridElim):-
 	nth0(Index, Grid, OldValue),
 	NewTotalPath is TotalPath+OldValue,
-    replace(Grid, Index, 0, GridRep),
-    deletePathInGrid(GridRep, Tail, NewTotalPath, GridElim, NewValue, LastIndex).
+  replace(Grid, Index, 0, GridRep),
+  deletePathInGrid(GridRep, Tail, NewTotalPath, GridElim).
 
 /**
- * 
+ * pathtoIndex(+[[I,J]|Tail], +NumOfColumns, +AuxList, -Index)
+ * Convierte una lista de elementos de la forma [I,J] a una lista de indices.
  */
 pathtoIndex([], _, AuxList, AuxList).
-pathtoIndex([[I,J]|Tail], NumOfColumns, AuxList, Return):-
+pathtoIndex([[I,J]|Tail], NumOfColumns, AuxList, IndexList):-
 	Index is I*NumOfColumns + J,
 	addLast(Index, AuxList, NewAuxList),
-	pathtoIndex(Tail, NumOfColumns, NewAuxList, Return).
+	pathtoIndex(Tail, NumOfColumns, NewAuxList, IndexList).
 
 /**
  * smallerPow2GreatorOrEqualThan(+Result, -Value)
  * Calcula la menor potencia de 2, que sea mayor o igual al Result pasado por parámetro.
- * Este resultado es retornado en Value
  */
 smallerPow2GreaterOrEqualThan(Result, Value):-
 	Log2num = floor(log(Result)/log(2)),
@@ -257,27 +262,25 @@ smallerPow2GreaterOrEqualThan(Result, Value):-
 	Value is 2**(Log2num+1).
 
 /**
- * removeIndex(+[H|T], +Indice, -[H|Resto])
+ * removeIndex(+[H|Tail], +Indice, -[H|Remainder])
  * Remueve el elemento en el indice pasado por parámetro y retorna la lista actualizada.
  */
 removeIndex([], _, []).
-removeIndex([_|T], 0, T).
-removeIndex([H|T], Indice, [H|Resto]) :-
-    Indice > 0,
-    Indice1 is Indice - 1,
-    removeIndex(T, Indice1, Resto).
+removeIndex([_|Tail], 0, Tail).
+removeIndex([H|Tail], Index, [H|Remainder]) :-
+    Index > 0,
+    NewIndex is Index - 1,
+    removeIndex(Tail, NewIndex, Remainder).
 
 /**
- * replace(+[H|T], +I, +X, -[H|R])
- * [H|T] es la lista de la cuál se quiere reemplazar el elemento en el índice I por X
- * [H|R] es la lista a retornar con el elemento reemplazado por X
+ * replace(+[H|Tail], +Index, +X, -Remainder)
+ * [H|Tail] es la lista de la cuál se quiere reemplazar el elemento en el índice Index por X
+ * [H|Remainder] es la lista a retornar con el elemento reemplazado por X
  */
-
-replace([_|T], 0, X, [X|T]).
-replace([H|T], I, X, [H|R]) :-
-    I > 0, NI is I - 1,
-    replace(T, NI, X, R).
-
+replace([_|Tail], 0, X, [X|Tail]).
+replace([H|Tail], Index, X, [H|Remainder]) :-
+    Index > 0, NewIndex is Index - 1,
+    replace(Tail, NewIndex, X, Remainder).
 
 /**
  * squareGenerator(+Min, +Max, -Number)
@@ -286,15 +289,6 @@ replace([H|T], I, X, [H|R]) :-
  */
 squareGenerator(Min, Max,Number):- 
 	random(Min, Max, Random), Number is 2**Random.
-
-
-/**
- * find(+X, +[Y|Tail])
- * Busca X dentro de la lista pasada como segundo parámetro
- */
-find(X,[X|_]). 
-find(X,[_|Tail]):- 
-  find(X,Tail). 
 
 /**
  * findAll(+X, +[X|Tail], -List)
@@ -306,13 +300,13 @@ findAll(X,[X|Tail], List):-
   addLast(X, List, NewList), findAll(X,Tail, NewList). 
 
 /**
- * addLast(+X, +[Head|Tail], -[Head|R])
+ * addLast(+X, +[H|Tail], -[H|Remainder])
  * Agrega el elemento X al final de la lista pasada por parámetro y retorna la nueva lista.
  * CB: Agrega X a una lista vacia. 
  * CR: La lista es no vacía, la recorre recursivamente hasta llegar al final y agrega X. 
  */
 addLast(X,[],[X]).
-addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R). 
+addLast(X,[H|Tail],[H|Remainder]):- addLast(X,Tail,Remainder). 
 
 /**
  * addFirst(+X, +List, -[X|List])
@@ -320,13 +314,6 @@ addLast(X,[Head|Tail],[Head|R]):- addLast(X,Tail,R).
  */
 addFirst(X,[],[X]).
 addFirst(X,List,[X|List]). 
-
-/**
- * find(+Index, +Lista, -Elemento, +ListaDefault)
- * Busca un Elemento en una lista a partir de su índice. 
- */
-find(Index, Lista, Elemento, ListaDefault) :-
-    (nth0(Index, Lista, Elemento) ; Elemento = ListaDefault).
 
 /**
  * remove(+X,+[H|Tail],[H|NewTail])
@@ -339,32 +326,27 @@ remove(X, [H|Tail], [H|NewTail]):-
   X \= H, remove(X,Tail,NewTail).
 
 /**
- * removeNegatives(+[H|T], -UpdatedList)
+ * removeNegatives(+[H|Tail], -UpdatedList)
  * Remueve todos los elementos negativos de una lista hasta que la lista esté vacía. 
  * CR1: El header de la lista es negativo, lo elimino.
  * CR2: El header de la lista es cero o positivo, no se elimina. 
  */
 removeNegatives([], []).
-removeNegatives([H|T], UpdatedList) :-
+removeNegatives([H|Tail], UpdatedList) :-
     H < 0,
-    removeNegatives(T, UpdatedList).
-removeNegatives([H|T], [H|UpdatedTail]) :-
+    removeNegatives(Tail, UpdatedList).
+removeNegatives([H|Tail], [H|UpdatedTail]) :-
     H >= 0,
-    removeNegatives(T, UpdatedTail).
+    removeNegatives(Tail, UpdatedTail).
 
 /**
- * concatenate(+[H|T], +L2, -[X|Res])
- * Concatena las dos listas ingresadas. 
- * CB: la primera lista es lista vacía. 
- * CR: la primera lista es no vacía, concateno H con L2 y concateno recursivamente T con L2.  
+ * 
  */
-concatenate([],L2,L2).
-concatenate([H|T], L2, [H|Res]):- concatenate(T,L2,Res). 
 
 concatenateWithoutReps([], L2, L2).
-concatenateWithoutReps([H|T], L2, Result) :-
+concatenateWithoutReps([H|Tail], L2, Result) :-
     member(H, L2),
-    concatenateWithoutReps(T, L2, Result).
-concatenateWithoutReps([H|T], L2, [H|Result]) :-
+    concatenateWithoutReps(Tail, L2, Result).
+concatenateWithoutReps([H|Tail], L2, [H|Result]) :-
     \+ member(H, L2),
-    concatenateWithoutReps(T, L2, Result).
+    concatenateWithoutReps(Tail, L2, Result).
