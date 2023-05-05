@@ -46,6 +46,11 @@ body {
   cursor: pointer;
 }
 
+.collapse:disabled{
+  background-color: grey;
+  cursor: default;
+}
+
 .board {
   margin: 20px;
   position: relative;

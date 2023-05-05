@@ -95,15 +95,18 @@ function Game() {
     if (restRGrids.length > 0) {
       setTimeout(() => {
         animateEffect(restRGrids);
-      }, 350);
+      }, 300);
     } else {
       setWaiting(false);
     }
   }
 
   function collapse(){
+    if(waiting)
+      return;
     const gridS = JSON.stringify(grid);
     const queryS = "collapse("+gridS+", "+numOfColumns+", RGrids)"; 
+    setWaiting(true);
     pengine.query(queryS, (success, response) =>{
       if (success){
         animateEffect(response['RGrids']);
@@ -124,7 +127,7 @@ function Game() {
     <div className="game">
       <div className="header">  
         {scoreOrSquare}
-        <button className="collapse" onClick={collapse}>colapsar</button>
+        <button className="collapse" onClick={collapse} disabled={waiting}>colapsar</button>
       </div>
       <Board
         grid={grid}

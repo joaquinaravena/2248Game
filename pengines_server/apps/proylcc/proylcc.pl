@@ -29,12 +29,13 @@
  * Retorna las grilla resultantes utilizando gravedad de a un bloque.
  */
 collapse(Grid, NumOfColumns, RGrids):-
-	shellAdyacents(Grid, 0, NumOfColumns, [], ToCollapse),
+	shellAdyacents(Grid, 0, NumOfColumns, [], [], ToCollapse),
 	deleteAllPaths(Grid, ToCollapse, GridElim),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridElim, ColumnsList, 0, NewColumnsList),
 	min_list(Grid, AuxMin), max_list(Grid, AuxMax),
-	Min is round(log(AuxMin)/log(2)), Max is round(log(AuxMax)/log(2))+1,
+	Min is round(log(AuxMin)/log(2)), 
+	Max is round(log(AuxMax)/log(2))+1,
 	gravityFalls(GridElim, NewColumnsList, [], TotalGrids, Min, Max),
 	append([GridElim], TotalGrids, RGrids).
 
@@ -53,25 +54,26 @@ deleteAllPaths(Grid, [H|Tail], GridEliminated):-
 	deleteAllPaths(GridAux, Tail, GridEliminated).
 
 /**
- * shellAdyacents(+Grid, +Index, +NumOfColumns, +Visited, -AdyacentList)
+ * shellAdyacents(+Grid, +Index, +NumOfColumns, +Visited, +AuxList, -AdyacentList)
  * Encuentra los grupos de adyacentes para toda la grilla.
  */
-shellAdyacents(Grid, Index,_, Visited, Visited):-
+shellAdyacents(Grid, Index,_, Visited, AuxList, AuxList):-
     length(Grid, LengthGrid), Index >= LengthGrid.
 
-shellAdyacents(Grid, Index, NumOfColumns, Visited, AdyacentList):-
+shellAdyacents(Grid, Index, NumOfColumns, Visited, AuxList, AdyacentList):-
 	\+ member(Index, Visited),
 	addFirst(Index, [], InitialList),
 	findGroups(Grid, [Index], NumOfColumns, InitialList, Group),
 	length(Group, LengthGroup), LengthGroup > 1,	
-	append(Visited, [Group], UpdatedVisited),
-  length(Grid, LengthGrid), Index < LengthGrid,
+	append(Visited, Group, UpdatedVisited),
+	append(AuxList, [Group], UpdatedAuxList),
+  	length(Grid, LengthGrid), Index < LengthGrid,
 	NewIndex is Index+1,
-	shellAdyacents(Grid, NewIndex, NumOfColumns, UpdatedVisited, AdyacentList);
+	shellAdyacents(Grid, NewIndex, NumOfColumns, UpdatedVisited, UpdatedAuxList, AdyacentList);
 
-  length(Grid, LengthGrid), Index < LengthGrid,
+  	length(Grid, LengthGrid), Index < LengthGrid,
 	NewIndex is Index+1,
-	shellAdyacents(Grid, NewIndex, NumOfColumns, Visited, AdyacentList).
+	shellAdyacents(Grid, NewIndex, NumOfColumns, Visited, AuxList, AdyacentList).
 
 /**
  * findGroups(+Grid, +[Index|Tail], +NumOfColumns, +Visited, -Group)
