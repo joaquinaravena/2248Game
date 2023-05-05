@@ -95,12 +95,13 @@ function Game() {
     if (restRGrids.length > 0) {
       setTimeout(() => {
         animateEffect(restRGrids);
-      }, 300);
+      }, 500);
     } else {
+      //checkMinMax(rGrids[0]);
       setWaiting(false);
     }
   }
-
+  
   function collapse(){
     if(waiting)
       return;
@@ -114,6 +115,25 @@ function Game() {
         setWaiting(false);
       }
     } )
+  }
+
+  function checkMinMax(){
+    if(waiting)
+      return;
+    const max = Math.log2(Math.max(...grid));
+    const min = Math.log2(Math.min(...grid));
+    if(max-min > 7){
+      const gridS = JSON.stringify(grid);
+      const queryS = "removeLowValues("+gridS+", "+min+", "+numOfColumns+", RGrids)";
+      setWaiting(true);
+      pengine.query(queryS, (success, response) => {
+        if (success) {
+          animateEffect(response['RGrids']);
+        } else {
+          setWaiting(false);
+        }
+      });
+    }
   }
 
   const scoreOrSquare = showScore ? 
