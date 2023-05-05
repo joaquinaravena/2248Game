@@ -7,22 +7,29 @@
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
- * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
+ * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía.
+ * Chequea si es necesario remover potencias de 2 muy bajas. 
  */ 
- join(Grid, NumOfColumns, Path, RGrids):-
+join(Grid, NumOfColumns, Path, RGrids):-
 	pathtoIndex(Path, NumOfColumns, [], IndexPath),
 	deletePathInGrid(Grid, IndexPath, 0, GridEliminated),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridEliminated, ColumnsList,0, NewColumnsList),
 	gridMinMax(Grid, GridEliminated, Min, Max),
 	gravityFalls(GridEliminated, NewColumnsList, [], TotalGrids, Min, Max),
-	append([GridEliminated], TotalGrids, RGrids).
+	append([GridEliminated], TotalGrids, AuxGrids),
+	dif(TotalGrids, []), 
+	last(TotalGrids, LastGrid),
+	append(AuxGrids, [LastGrid], RepGrids),
+	removeLowValues(LastGrid, Min, Max, NumOfColumns, GridGravity),
+	append(RepGrids, GridGravity, RGrids);
+	RGrids = Grid.
 
 /**
  * collapse(+Grid, +NumOfColumns, -RGrids)
  * Dados todos los grupos de adyacentes en la grilla utilizando shellAdyacents, 
  * los borra y reemplaza el último valor de cada grupo por la potencia de dos correspondiente
- * Retorna las grilla resultantes utilizando gravedad de a un bloque.
+ * Retorna las grilla resultantes utilizando gravedad de a un bloque y chequea si es necesario remover potencias de 2.
  */
 collapse(Grid, NumOfColumns, RGrids):-
 	shellAdyacents(Grid, 0, NumOfColumns, [], [], ToCollapse),
@@ -31,13 +38,27 @@ collapse(Grid, NumOfColumns, RGrids):-
 	gridToColumns(GridEliminated, ColumnsList, 0, NewColumnsList),
 	gridMinMax(Grid, Grid, Min, Max),
 	gravityFalls(GridEliminated, NewColumnsList, [], TotalGrids, Min, Max),
-	append([GridEliminated], TotalGrids, RGrids).
+	append([GridEliminated], TotalGrids, AuxGrids),
+	dif(TotalGrids, []),
+	last(TotalGrids, LastGrid),
+	append(AuxGrids, [LastGrid], RepGrids),
+	removeLowValues(LastGrid, Min, Max, NumOfColumns, GridGravity),
+	append(RepGrids, GridGravity, RGrids);
+	RGrids = Grid.
 
 /**
- * falta hacer, es para borrar los valores que quedan sueltos cuando va aumentando el square generado
+ * removeLowValues(+Grid, +MinPower, +MaxPower, +NumOfColumns, -TotalGrids)
+ * Remueve todos los valores que sean iguales a 2^MinPower de la grilla, si la diferencia entre la potencia minima y la máxima
+ * es mayor o igual a 11, sino, devuelve una lista vacía.
+ * Aplica efecto gravedad y retorna las grillas resultantes en TotalGrids.
  */
-removeLowValues(Grid, Power, NumOfColumns, RGrids):-
-	Value is 2**Power,
+removeLowValues(_,MinPower, MaxPower, _,[]):-
+	Dif = MaxPower-MinPower,
+	Dif < 11.
+removeLowValues(Grid, MinPower, MaxPower, NumOfColumns, TotalGrids):-
+	Dif = MaxPower-MinPower,
+	Dif >= 11,
+	Value is 2**MinPower,
 	findIndex(Grid, Value, 0, ValuesList),
 	last(ValuesList, LastIndex),	
 	deletePathInGrid(Grid, ValuesList, 0, GridAux),
@@ -46,8 +67,7 @@ removeLowValues(Grid, Power, NumOfColumns, RGrids):-
 	gridToColumns(GridEliminated, ColumnsList, 0, NewColumnsList),
 	gridMinMax(Grid, Grid, Min, Max),
 	UpdatedMin is Min+1,
-	gravityFalls(GridEliminated, NewColumnsList, [], TotalGrids, UpdatedMin, Max),
-	append([GridEliminated], TotalGrids, RGrids).	
+	gravityFalls(GridEliminated, NewColumnsList, [], TotalGrids, UpdatedMin, Max).
 
 /**
  * gridMinMax(+GridMin, +GridMax, -Min, -Max)
@@ -58,6 +78,7 @@ gridMinMax(GridMin, GridMax, Min, Max):-
 	max_list(GridMax, AuxMax),
 	Min is round(log(AuxMin)/log(2)),
 	Max is round(log(AuxMax)/log(2)).
+
 /**
  * deleteAllPaths(+Grid, +[H|Tail], -GridEliminated)
  * Borra todos los Path de la lista pasada por parámetro.
@@ -324,16 +345,6 @@ addFirst(X,List,[X|List]).
 remove(X,[X|Tail],Tail).
 remove(X, [H|Tail], [H|NewTail]):-
   X \= H, remove(X,Tail,NewTail).
-
-/**
- * removeNegatives(+[H|Tail], -UpdatedList)
- * Remueve todos los elementos negativos de una lista hasta que la lista esté vacía. 
- */
-removeNegatives([], []).
-removeNegatives([H|Tail], UpdatedList) :-
-    H < 0, removeNegatives(Tail, UpdatedList).
-removeNegatives([H|Tail], [H|UpdatedTail]) :-
-    H >= 0, removeNegatives(Tail, UpdatedTail).
 
 /**
  * concatenateWithoutReps(+[H|Tail], +L2, -[H|Result])

@@ -97,14 +97,15 @@ function Game() {
         animateEffect(restRGrids);
       }, 500);
     } else {
-      //checkMinMax(rGrids[0]);
       setWaiting(false);
     }
   }
   
+  /**
+   * Colapsa todos los grupos del mismo valor para toda la grilla, no suma puntos
+   *  
+   */
   function collapse(){
-    if(waiting)
-      return;
     const gridS = JSON.stringify(grid);
     const queryS = "collapse("+gridS+", "+numOfColumns+", RGrids)"; 
     setWaiting(true);
@@ -114,28 +115,12 @@ function Game() {
       }else{
         setWaiting(false);
       }
-    } )
+    });
   }
 
-  function checkMinMax(){
-    if(waiting)
-      return;
-    const max = Math.log2(Math.max(...grid));
-    const min = Math.log2(Math.min(...grid));
-    if(max-min > 7){
-      const gridS = JSON.stringify(grid);
-      const queryS = "removeLowValues("+gridS+", "+min+", "+numOfColumns+", RGrids)";
-      setWaiting(true);
-      pengine.query(queryS, (success, response) => {
-        if (success) {
-          animateEffect(response['RGrids']);
-        } else {
-          setWaiting(false);
-        }
-      });
-    }
-  }
-
+  /**
+   * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
+   */
   const scoreOrSquare = showScore ? 
     (<div className="score">{score}</div>) : 
     (<Square value={joinResult(path, grid, numOfColumns)} className="score"/>);
