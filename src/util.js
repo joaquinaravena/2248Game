@@ -1,6 +1,6 @@
 export function numberToColor(num) {
-    const power = Math.log2(num);
-    const list = ["#249cd1", "#ec893b", "#6495ed", "#af4e7a", "#a63e4a", "#8d6ebc", "#c2b280", "#ff1493", "#ffb6c1", "#3cb371", "#9c27b0", "#f0e68c", "#5e738f"];
+    const power = Math.log2(num)-1;
+    const list = ["#bc032e", "#1a9850", "#f46643", "#f3ff3c", "#ea9aff", "#006268", "#1ac8a0", "#bfebff", "#fdae61", "#e15e9f", "#b1b1b1", "#dfb63f"];
     const color = power % list.length;
     return list[color]; 
 }

@@ -23,7 +23,7 @@ join(Grid, NumOfColumns, Path, RGrids):-
 	append(AuxGrids, [LastGrid], RepGrids),
 	removeLowValues(LastGrid, Min, Max, NumOfColumns, GridGravity),
 	append(RepGrids, GridGravity, RGrids);
-	RGrids = Grid.
+	RGrids = [Grid].
 
 /**
  * collapse(+Grid, +NumOfColumns, -RGrids)
@@ -33,6 +33,7 @@ join(Grid, NumOfColumns, Path, RGrids):-
  */
 collapse(Grid, NumOfColumns, RGrids):-
 	shellAdyacents(Grid, 0, NumOfColumns, [], [], ToCollapse),
+	dif(ToCollapse, []),
 	deleteAllPaths(Grid, ToCollapse, GridEliminated),
 	initializeLists([], NumOfColumns, ColumnsList),
 	gridToColumns(GridEliminated, ColumnsList, 0, NewColumnsList),
@@ -44,7 +45,8 @@ collapse(Grid, NumOfColumns, RGrids):-
 	append(AuxGrids, [LastGrid], RepGrids),
 	removeLowValues(LastGrid, Min, Max, NumOfColumns, GridGravity),
 	append(RepGrids, GridGravity, RGrids);
-	RGrids = Grid.
+	
+	RGrids = [Grid].
 
 /**
  * removeLowValues(+Grid, +MinPower, +MaxPower, +NumOfColumns, -TotalGrids)
