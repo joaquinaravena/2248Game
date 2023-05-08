@@ -276,6 +276,7 @@ initializeLists(List, NumOfLists, ReturnList):-
 
 /**
  * max_list(+[X,Y|Tail],-Max)
+ * Busca y devuelve el elemento de mayor valor de una lista pasada como parámetro. 
  */
 max_list([],0).
 max_list([X], X).
