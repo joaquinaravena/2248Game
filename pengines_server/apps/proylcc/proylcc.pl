@@ -87,10 +87,29 @@ gridMinMax(GridMin, GridMax, Min, Max):-
  */
 deleteAllPaths(Grid, [], Grid).
 deleteAllPaths(Grid, [H|Tail], GridEliminated):-
- 	deletePathInGrid(Grid, H, 0, GridAux),
+	max_list(H,Max),
+	remove(Max, H, Aux),
+	addLast(Max, Aux, UpdatedH),
+	deletePathInGrid(Grid, UpdatedH, 0, GridAux),
 	deleteAllPaths(GridAux, Tail, GridEliminated).
 
 /**
+ * deletePathInGrid(+Grid, +Path, +TotalPath, -GridEliminated)
+ * Borra todos los elementos del Path en Grid, y el último lo reemplaza por la potencia de dos adecuada
+ */
+deletePathInGrid(Grid, [Index|[]], TotalPath, GridEliminated):-
+	nth0(Index, Grid, OldValue),
+	NewTotalPath is TotalPath+OldValue,
+	smallerPow2GreaterOrEqualThan(NewTotalPath, NewValue),
+	replace(Grid, Index, NewValue, GridEliminated).
+
+deletePathInGrid(Grid, [Index|Tail], TotalPath, GridEliminated):-
+	nth0(Index, Grid, OldValue),
+	NewTotalPath is TotalPath+OldValue,
+	replace(Grid, Index, 0, GridRep),
+	deletePathInGrid(GridRep, Tail, NewTotalPath, GridEliminated).
+/**
+ 
  * shellAdyacents(+Grid, +Index, +NumOfColumns, +Visited, +AuxList, -AdyacentList)
  * Encuentra los grupos de adyacentes para toda la grilla.
  */
@@ -256,20 +275,16 @@ initializeLists(List, NumOfLists, ReturnList):-
 	initializeLists(NewList, Aux, ReturnList).
 
 /**
- * deletePathInGrid(+Grid, +Path, +TotalPath, -GridEliminated)
- * Borra todos los elementos del Path en Grid, y el último lo reemplaza por la potencia de dos adecuada
+ * max_list(+[X,Y|Tail],-Max)
  */
-deletePathInGrid(Grid, [Index|[]], TotalPath, GridEliminated):-
-	nth0(Index, Grid, OldValue),
-	NewTotalPath is TotalPath+OldValue,
-	smallerPow2GreaterOrEqualThan(NewTotalPath, NewValue),
-	replace(Grid, Index, NewValue, GridEliminated).
-
-deletePathInGrid(Grid, [Index|Tail], TotalPath, GridEliminated):-
-	nth0(Index, Grid, OldValue),
-	NewTotalPath is TotalPath+OldValue,
-	replace(Grid, Index, 0, GridRep),
-	deletePathInGrid(GridRep, Tail, NewTotalPath, GridEliminated).
+max_list([],0).
+max_list([X], X).
+max_list([X,Y|Tail], Max) :-
+    X =< Y,
+    max_list([Y|Tail], Max).
+max_list([X,Y|Tail], Max) :-
+    X > Y,
+    max_list([X|Tail], Max).
 
 /**
  * pathtoIndex(+[[I,J]|Tail], +NumOfColumns, +AuxList, -IndexList)
