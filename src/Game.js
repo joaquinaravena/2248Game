@@ -117,7 +117,14 @@ function Game() {
       }
     });
   }
+   
+  function maxMove(){
 
+  }
+
+  function maxEqual(){
+
+  }
   /**
    * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
    */
@@ -132,7 +139,6 @@ function Game() {
     <div className="game">
       <div className="header">  
         {scoreOrSquare}
-        <button className="collapse" onClick={collapse} disabled={waiting}>colapsar</button>
       </div>
       <Board
         grid={grid}
@@ -141,6 +147,13 @@ function Game() {
         onPathChange={onPathChange}
         onDone={onPathDone}
       />
+      <aside className="asideBar"> 
+        <div className="asideBox">
+          <button className="buttons" onClick={collapse} disabled={waiting}>Colapsar <br/>iguales</button>
+          <button className="buttons" onClick={maxMove} disabled={waiting}> Movida<br />Máxima</button>
+          <button className="buttons" onClick={maxEqual} disabled={waiting}>Máximos iguales<br />adyacentes</button>
+        </div>
+      </aside>
     </div>
   );
 }
