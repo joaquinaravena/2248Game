@@ -117,14 +117,40 @@ function Game() {
       }
     });
   }
-   
+  /**
+   * 
+   * 
+   */
   function maxMove(){
-
+    const gridS = JSON.stringify(grid);
+    const queryS = "maxMove("+gridS+", "+numOfColumns+", Path)"; 
+    setWaiting(true);
+    pengine.query(queryS, (success, response) =>{
+      if (success){
+        setPathI(response['Path']);
+      }else{
+        setWaiting(false);
+      }
+    });
   }
-
+/**
+ * calcule y muestre el camino que consiga generar el número más grande posible adyacente a otro igual 
+ * (preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos. 
+ */
   function maxEqual(){
-
+    const gridS = JSON.stringify(grid);
+    const queryS = "maxEqual("+gridS+", "+numOfColumns+", Path)"; 
+    setWaiting(true);
+    pengine.query(queryS, (success, response) =>{
+      if (success){
+        setPath(response['Path']);
+      }else{
+        setWaiting(false);
+      }
+    });
   }
+
+
   /**
    * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
    */

@@ -3,7 +3,118 @@
 		join/4
 	]).
 
+/**
+ * --------------------------------------------------------------------------------------------------------
+ * 										Etapa 2 
+ * --------------------------------------------------------------------------------------------------------
+ */
+/**
+ * capaz se necesita
+ */
+addOrder(Elem, [], [Elem]).
+addOrder(Elem, [X|Rest], UpdatedList) :-
+    Elem =< X,
+    UpdatedList = [Elem,X|Rest].
+addOrder(Elem, [X|Rest], UpdatedList) :-
+    Elem > X,
+    addOrder(Elem, Rest, UpdatedRest),
+    UpdatedList = [X|UpdatedRest].
 
+/**
+ * maxMove(+Grid, +NumOfColumns, -Path)
+ * calcule y muestre el camino que
+ * consiga el mayor número a partir de la configuración actual. Si hay más de uno que cumpla con
+ * esta condición, mostrar cualquiera de ellos
+ */
+maxMove(Grid, NumOfColumns, Path):-
+	shellMaxMove(Grid, NumOfColumns, 0, [], Path).
+
+/**
+ * busca el camino maximo de todos los bloques 1 por 1, y se queda con el más alto
+ * path is [Index div NumOfC, Index mod NumOfC]
+ */
+shellMaxMove(Grid, _, Index, ActualPath, Return):-
+	length(Grid, LengthGrid), Index >= LengthGrid, Return = ActualPath.
+shellMaxMove(Grid, NumOfColumns, Index, ActualScore, ActualPath, Return):-
+	findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath),
+	NewIndex is Index+1,
+	shellMaxMove(Grid, NumOfColumns, NewIndex, NewScore, NewPath, Return).
+
+
+/**
+ * encuentra el camino maximo de 1 bloque
+ */
+findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath):-
+	nth0(Index, Grid, Elem),
+	findAllPosiblePaths(Grid, NumOfColumns, Index, IndexPath),
+	smallerPow2GreaterOrEqualThan(Result, AuxScore),
+	max(ActualScore, AuxScore, NewScore).
+	%seguir como cambiar el path dependiendo del score
+
+
+/**
+ * findAllPosiblePaths(+Grid, +NumOfColumns, +Index, -Return)
+ * Dado un Index encuentra todos los adyacentes posibles en la Grid para continuar el camino
+ */
+findAllPosiblePaths(Grid, NumOfColumns, Index, Return):-
+	getRow(NumOfColumns, Index, 0, Row),
+	nth0(Index, Grid, Value),
+	
+	%Up
+    UpRight is Index-NumOfColumns+1,
+	pathCanBeDone(Grid, Value, UpRight, Row-1, NumOfColumns, [], UpdatedList2),
+	UpMid is Index-NumOfColumns,
+	pathCanBeDone(Grid, Value, UpMid, Row-1, NumOfColumns, UpdatedList2, UpdatedList3),
+	UpLeft is Index-NumOfColumns-1,
+	pathCanBeDone(Grid, Value, UpLeft, Row-1, NumOfColumns, UpdatedList3, UpdatedList4),
+	%Mid
+	MidLeft is Index-1,
+	pathCanBeDone(Grid, Value, MidLeft, Row, NumOfColumns, UpdatedList4, UpdatedList5),
+	MidRight is Index+1,
+	pathCanBeDone(Grid, Value, MidRight, Row, NumOfColumns, UpdatedList5, UpdatedList6),
+	%Down
+	DownRight is Index+NumOfColumns+1,
+	pathCanBeDone(Grid, Value, DownRight, Row+1, NumOfColumns, UpdatedList6, UpdatedList7),
+	DownMid is Index+NumOfColumns,
+	pathCanBeDone(Grid, Value, DownMid, Row+1, NumOfColumns,  UpdatedList7, UpdatedList8),
+	DownLeft is Index+NumOfColumns-1,
+	pathCanBeDone(Grid, Value, DownLeft, Row+1, NumOfColumns, UpdatedList8, Return).
+
+/**
+ * pathCanBeDone(+Grid, +FirstValue, +SecIndex, +Row, +NumOfColumns, +ActualList, -UpdatedList)
+ * chequea si puede hacerse un camino desde FirstValue hacia SecValue, lo cual retorna verdadero en el caso
+ * que tengan el mismo valor o SecValue sea la siguiente potencia de dos.
+ */
+pathCanBeDone(Grid, FirstValue, SecIndex, Row, NumOfColumns, ActualList, UpdatedList):-
+	getRow(NumOfColumns, SecIndex, 0, AuxRow),
+	AuxRow is Row,
+	nth0(SecIndex, Grid, SecValue),
+	(FirstValue =:= SecValue ; 2*FirstValue =:= SecValue),
+	addLast(SecIndex, ActualList, UpdatedList);
+	UpdatedList = ActualList.
+
+/**
+ * maxEqual(+Grid, +NumOfColumns, -Path)
+ * calcule y muestre el camino que consiga generar el número más grande posible adyacente a otro 
+ * igual(preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos.
+ */
+maxEqual(Grid, NumOfColumns, Path).
+
+/**
+ * max(+A, +B, -Max)
+ * Retorna el máximo entre A y B
+ */
+max(A, B, Max) :-
+    A >= B,
+    Max is A.
+max(A, B, Max) :-
+    A < B,
+    Max is B.
+/**
+ * --------------------------------------------------------------------------------------------------------
+ * 										Etapa 1 
+ * --------------------------------------------------------------------------------------------------------
+ */
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
