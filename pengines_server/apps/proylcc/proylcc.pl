@@ -27,28 +27,51 @@ addOrder(Elem, [X|Rest], UpdatedList) :-
  * esta condición, mostrar cualquiera de ellos
  */
 maxMove(Grid, NumOfColumns, Path):-
-	shellMaxMove(Grid, NumOfColumns, 0, [], Path).
+	shellMaxMove(Grid, NumOfColumns, 0, 0, [], Path).
 
 /**
  * busca el camino maximo de todos los bloques 1 por 1, y se queda con el más alto
  * path is [Index div NumOfC, Index mod NumOfC]
  */
-shellMaxMove(Grid, _, Index, ActualPath, Return):-
+shellMaxMove(Grid, _, Index, _, ActualPath, Return):-
 	length(Grid, LengthGrid), Index >= LengthGrid, Return = ActualPath.
+
 shellMaxMove(Grid, NumOfColumns, Index, ActualScore, ActualPath, Return):-
-	findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath),
+	findMaxMove(Grid, NumOfColumns, Index, ActualScore, AuxScore, ActualPath, AuxPath, []),
+	max_path(ActualScore, AuxScore, NewScore, NewPath, ActualPath, AuxPath),
+	%este max_path es para ir manteniendo el maximo score y path de todos los bloques
 	NewIndex is Index+1,
 	shellMaxMove(Grid, NumOfColumns, NewIndex, NewScore, NewPath, Return).
 
+/**
+ * max_path(+A, +B, -Score, -Path, +PathA, +PathB)
+ * Establece Score y Path con el máximo entre A y B 
+ */
+max_path(A, B, Score, Path, PathA, PathB) :-
+	(A > B -> (Path = PathA, Score = A) ; (Path = PathB, Score = B)).
+
+/**
+ * indexToPath(+NumOfColumns, +[H|Tail], +PathList, -Return)
+ * Pasa una lista de indices a una lista de [I,J], utilizando el número de columnas de la grilla
+ */
+indexToPath(_, [], PathList, PathList).
+indexToPath(NumOfColumns, [H|Tail], PathList, Return):-
+	I is div(H, NumOfColumns),
+	J is mod(H, NumOfColumns),
+	HPath = [I, J],	
+	addLast(HPath, PathList, NewPathList),
+	indexToPath(NumOfColumns, Tail, NewPathList, Return).
 
 /**
  * encuentra el camino maximo de 1 bloque
  */
-findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath):-
+findMaxMove(Grid, _, Index, ActualScore, NewScore, ActualPath, NewPath, _):-
+	smallerPow2GreaterOrEqualThan(Result, AuxScore).
+%caso base, falta ver como calcular el score del path
+
+findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath, Visited):-
 	nth0(Index, Grid, Elem),
-	findAllPosiblePaths(Grid, NumOfColumns, Index, IndexPath),
-	smallerPow2GreaterOrEqualThan(Result, AuxScore),
-	max(ActualScore, AuxScore, NewScore).
+	findAllPosiblePaths(Grid, NumOfColumns, Index, IndexPath).
 	%seguir como cambiar el path dependiendo del score
 
 
