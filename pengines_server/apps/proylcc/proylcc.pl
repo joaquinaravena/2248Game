@@ -8,17 +8,6 @@
  * 										Etapa 2 
  * --------------------------------------------------------------------------------------------------------
  */
-/**
- * capaz se necesita
- */
-addOrder(Elem, [], [Elem]).
-addOrder(Elem, [X|Rest], UpdatedList) :-
-    Elem =< X,
-    UpdatedList = [Elem,X|Rest].
-addOrder(Elem, [X|Rest], UpdatedList) :-
-    Elem > X,
-    addOrder(Elem, Rest, UpdatedRest),
-    UpdatedList = [X|UpdatedRest].
 
 /**
  * maxMove(+Grid, +NumOfColumns, -Path)
@@ -44,6 +33,69 @@ shellMaxMove(Grid, NumOfColumns, Index, ActualScore, ActualPath, Return):-
 	shellMaxMove(Grid, NumOfColumns, NewIndex, NewScore, NewPath, Return).
 
 /**
+ * encuentra el camino maximo de 1 bloque
+ */
+findMaxMove(_, _, _, [], ActualPath, _, _, ActualPath).
+findMaxMove(Grid, NumOfColumns, Index, [H|Tail], ActualPath, ActualScore, Visited, Return):-
+	findAllPosiblePaths(Grid, NumOfColumns, H, Visited, IndexPath),
+	IndexPath is [H|Tail],
+	addLast(H, Visited, UpdatedVisited),
+	nth0(H, Grid, Elem),
+	UpdatedScore is ActualScore + Elem,
+	addLast(H, ActualPath, UpdatedPath),
+	findMaxMove(Grid, NumOfColumns, Index, Tail, UpdatedPath, UpdatedScore, UpdatedVisit, Return).
+	%cambiar index
+
+/**
+ * findAllPosiblePaths(+Grid, +NumOfColumns, +Index, +Visited, -Return)
+ * Dado un Index encuentra todos los adyacentes posibles en la Grid para continuar el camino
+ */
+findAllPosiblePaths(Grid, NumOfColumns, Index, Visited, Return):-
+	getRow(NumOfColumns, Index, 0, Row),
+	nth0(Index, Grid, Value),
+	%Up
+  UpRight is Index-NumOfColumns+1,
+	pathCanBeDone(Grid, Value, UpRight, Row-1, NumOfColumns, [], UpdatedList2),
+	UpMid is Index-NumOfColumns,
+	pathCanBeDone(Grid, Value, UpMid, Row-1, NumOfColumns, UpdatedList2, UpdatedList3),
+	UpLeft is Index-NumOfColumns-1,
+	pathCanBeDone(Grid, Value, UpLeft, Row-1, NumOfColumns, UpdatedList3, UpdatedList4),
+	%Mid
+	MidLeft is Index-1,
+	pathCanBeDone(Grid, Value, MidLeft, Row, NumOfColumns, UpdatedList4, UpdatedList5),
+	MidRight is Index+1,
+	pathCanBeDone(Grid, Value, MidRight, Row, NumOfColumns, UpdatedList5, UpdatedList6),
+	%Down
+	DownRight is Index+NumOfColumns+1,
+	pathCanBeDone(Grid, Value, DownRight, Row+1, NumOfColumns, UpdatedList6, UpdatedList7),
+	DownMid is Index+NumOfColumns,
+	pathCanBeDone(Grid, Value, DownMid, Row+1, NumOfColumns,  UpdatedList7, UpdatedList8),
+	DownLeft is Index+NumOfColumns-1,
+	pathCanBeDone(Grid, Value, DownLeft, Row+1, NumOfColumns, UpdatedList8, AuxList),
+	remove_all(Visited, AuxList, Return).
+
+/**
+ * 
+ */
+remove_all([], AuxList, AuxList).  % Caso base: no hay elementos en Visited para remover
+remove_all([X|Visited], AuxList, UpdatedList) :-
+	delete(AuxList, X, TempList),  % Eliminar el elemento X de AuxList
+	remove_all(Visited, TempList, UpdatedList).
+
+/**
+ * pathCanBeDone(+Grid, +FirstValue, +SecIndex, +Row, +NumOfColumns, +ActualList, -UpdatedList)
+ * chequea si puede hacerse un camino desde FirstValue hacia SecValue, lo cual retorna verdadero en el caso
+ * que tengan el mismo valor o SecValue sea la siguiente potencia de dos.
+ */
+pathCanBeDone(Grid, FirstValue, SecIndex, Row, NumOfColumns, ActualList, UpdatedList):-
+	getRow(NumOfColumns, SecIndex, 0, AuxRow),
+	AuxRow is Row,
+	nth0(SecIndex, Grid, SecValue),
+	((ActualList = []) -> (FirstValue =:= SecValue) ; (FirstValue =:= SecValue ; 2*FirstValue =:= SecValue)),
+	addLast(SecIndex, ActualList, UpdatedList);
+	UpdatedList = ActualList.
+
+/**
  * max_path(+A, +B, -Score, -Path, +PathA, +PathB)
  * Establece Score y Path con el máximo entre A y B 
  */
@@ -61,60 +113,6 @@ indexToPath(NumOfColumns, [H|Tail], PathList, Return):-
 	HPath = [I, J],	
 	addLast(HPath, PathList, NewPathList),
 	indexToPath(NumOfColumns, Tail, NewPathList, Return).
-
-/**
- * encuentra el camino maximo de 1 bloque
- */
-findMaxMove(Grid, _, Index, ActualScore, NewScore, ActualPath, NewPath, _):-
-	smallerPow2GreaterOrEqualThan(Result, AuxScore).
-%caso base, falta ver como calcular el score del path
-
-findMaxMove(Grid, NumOfColumns, Index, ActualScore, NewScore, ActualPath, NewPath, Visited):-
-	nth0(Index, Grid, Elem),
-	findAllPosiblePaths(Grid, NumOfColumns, Index, IndexPath).
-	%seguir como cambiar el path dependiendo del score
-
-
-/**
- * findAllPosiblePaths(+Grid, +NumOfColumns, +Index, -Return)
- * Dado un Index encuentra todos los adyacentes posibles en la Grid para continuar el camino
- */
-findAllPosiblePaths(Grid, NumOfColumns, Index, Return):-
-	getRow(NumOfColumns, Index, 0, Row),
-	nth0(Index, Grid, Value),
-	
-	%Up
-    UpRight is Index-NumOfColumns+1,
-	pathCanBeDone(Grid, Value, UpRight, Row-1, NumOfColumns, [], UpdatedList2),
-	UpMid is Index-NumOfColumns,
-	pathCanBeDone(Grid, Value, UpMid, Row-1, NumOfColumns, UpdatedList2, UpdatedList3),
-	UpLeft is Index-NumOfColumns-1,
-	pathCanBeDone(Grid, Value, UpLeft, Row-1, NumOfColumns, UpdatedList3, UpdatedList4),
-	%Mid
-	MidLeft is Index-1,
-	pathCanBeDone(Grid, Value, MidLeft, Row, NumOfColumns, UpdatedList4, UpdatedList5),
-	MidRight is Index+1,
-	pathCanBeDone(Grid, Value, MidRight, Row, NumOfColumns, UpdatedList5, UpdatedList6),
-	%Down
-	DownRight is Index+NumOfColumns+1,
-	pathCanBeDone(Grid, Value, DownRight, Row+1, NumOfColumns, UpdatedList6, UpdatedList7),
-	DownMid is Index+NumOfColumns,
-	pathCanBeDone(Grid, Value, DownMid, Row+1, NumOfColumns,  UpdatedList7, UpdatedList8),
-	DownLeft is Index+NumOfColumns-1,
-	pathCanBeDone(Grid, Value, DownLeft, Row+1, NumOfColumns, UpdatedList8, Return).
-
-/**
- * pathCanBeDone(+Grid, +FirstValue, +SecIndex, +Row, +NumOfColumns, +ActualList, -UpdatedList)
- * chequea si puede hacerse un camino desde FirstValue hacia SecValue, lo cual retorna verdadero en el caso
- * que tengan el mismo valor o SecValue sea la siguiente potencia de dos.
- */
-pathCanBeDone(Grid, FirstValue, SecIndex, Row, NumOfColumns, ActualList, UpdatedList):-
-	getRow(NumOfColumns, SecIndex, 0, AuxRow),
-	AuxRow is Row,
-	nth0(SecIndex, Grid, SecValue),
-	(FirstValue =:= SecValue ; 2*FirstValue =:= SecValue),
-	addLast(SecIndex, ActualList, UpdatedList);
-	UpdatedList = ActualList.
 
 /**
  * maxEqual(+Grid, +NumOfColumns, -Path)
