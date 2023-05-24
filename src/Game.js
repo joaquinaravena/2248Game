@@ -117,6 +117,7 @@ function Game() {
       }
     });
   }
+
   /**
    * 
    * 
@@ -127,7 +128,8 @@ function Game() {
     setWaiting(true);
     pengine.query(queryS, (success, response) =>{
       if (success){
-        setPath(response['Path']);
+        setWaiting(false);
+        onPathChange(response['Path']);
       }else{
         setWaiting(false);
       }
