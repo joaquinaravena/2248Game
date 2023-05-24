@@ -16,35 +16,52 @@
  * esta condición, mostrar cualquiera de ellos
  */
 maxMove(Grid, NumOfColumns, Path):-
-	shellMaxMove(Grid, NumOfColumns, 0, 0, [], Path).
+	shellMaxMove(Grid, NumOfColumns, 0, [], 0, Path).
 
 /**
- * busca el camino maximo de todos los bloques 1 por 1, y se queda con el más alto
- * path is [Index div NumOfC, Index mod NumOfC]
+ * shellMaxMove(+Grid, +NumOfColumns, +Index, +ActualPath, -Path)
  */
-shellMaxMove(Grid, _, Index, _, ActualPath, Return):-
-	length(Grid, LengthGrid), Index >= LengthGrid, Return = ActualPath.
+shellMaxMove(Grid, _, Index, ActualPath, _, ActualPath):-
+	length(Grid, LengthGrid), Index >= LengthGrid.
 
-shellMaxMove(Grid, NumOfColumns, Index, ActualScore, ActualPath, Return):-
-	findMaxMove(Grid, NumOfColumns, Index, ActualScore, AuxScore, ActualPath, AuxPath, []),
-	max_path(ActualScore, AuxScore, NewScore, NewPath, ActualPath, AuxPath),
-	%este max_path es para ir manteniendo el maximo score y path de todos los bloques
-	NewIndex is Index+1,
-	shellMaxMove(Grid, NumOfColumns, NewIndex, NewScore, NewPath, Return).
+shellMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path) :-
+	length(Grid, LengthGrid), Index < LengthGrid,	
+    findall([FinalPath, FinalScore], recMaxMove(Grid, NumOfColumns, Index, [Index], 0, [], -inf, FinalPath, FinalScore), AllPaths),
+    getMaxPathFromList(AllPaths, 0, [], MaxIndexPath, MaxScore),
+	MaxScore > ActualScore,
+	indexToPath(NumOfColumns, MaxIndexPath, [], AuxPath),
+	reverse(AuxPath, NewPath), 
+	NewIndex = Index+1,
+	shellMaxMove(Grid, NumOfColumns, NewIndex, NewPath, MaxScore, Path);
+
+	NewIndex = Index+1, 
+	shellMaxMove(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path).
 
 /**
- * encuentra el camino maximo de 1 bloque
+ * recMaxMove(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, +MaxPath, +MaxScore, -FinalPath, -FinalScore)
  */
-findMaxMove(_, _, _, [], ActualPath, _, _, ActualPath).
-findMaxMove(Grid, NumOfColumns, Index, [H|Tail], ActualPath, ActualScore, Visited, Return):-
-	findAllPosiblePaths(Grid, NumOfColumns, H, Visited, IndexPath),
-	IndexPath is [H|Tail],
-	addLast(H, Visited, UpdatedVisited),
-	nth0(H, Grid, Elem),
-	UpdatedScore is ActualScore + Elem,
-	addLast(H, ActualPath, UpdatedPath),
-	findMaxMove(Grid, NumOfColumns, Index, Tail, UpdatedPath, UpdatedScore, UpdatedVisit, Return).
-	%cambiar index
+recMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, MaxPath, MaxScore, FinalPath, FinalScore) :-
+    findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),   % Obtener lista de adyacentes
+    dif(AdyacentsList, []),
+    member(Adyacent, AdyacentsList),
+    \+ member(Adyacent, ActualPath),
+    nth0(Adyacent, Grid, AuxScore),    % Obtener AuxScore del arco
+    UpdatedScore is ActualScore + AuxScore,
+    recMaxMove(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, MaxPath, MaxScore, FinalPath, FinalScore).
+
+recMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, MaxPath, MaxScore, FinalPath, FinalScore):-
+    findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
+    \+ dif(AdyacentsList, []),
+    (ActualScore > MaxScore) ->  (FinalPath = ActualPath, FinalScore = ActualScore); (FinalPath = MaxPath, FinalScore = MaxScore).
+
+/**
+ * getMaxPathFromList(+[[Path, Score]|Tail], +MaxScore, +MaxPath, -ResultPath, -ResultScore)
+ * Retorna el camino con el máximo Score de la lista ingresada
+ */
+getMaxPathFromList([[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
+    (Score > MaxScore) ->  (ResultPath = Path, ResultScore = Score);(ResultPath = MaxPath, ResultScore = MaxScore).
+getMaxPathFromList([[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
+    (Score > MaxScore) ->  (getMaxPathFromList(Tail, Score, Path, ResultPath, ResultScore)); (getMaxPathFromList(Tail, MaxScore, MaxPath, ResultPath, ResultScore)). 
 
 /**
  * findAllPosiblePaths(+Grid, +NumOfColumns, +Index, +Visited, -Return)
@@ -55,52 +72,38 @@ findAllPosiblePaths(Grid, NumOfColumns, Index, Visited, Return):-
 	nth0(Index, Grid, Value),
 	%Up
   UpRight is Index-NumOfColumns+1,
-	pathCanBeDone(Grid, Value, UpRight, Row-1, NumOfColumns, [], UpdatedList2),
+	pathCanBeDone(Grid, Value, Visited, UpRight, Row-1, NumOfColumns, [], UpdatedList2),
 	UpMid is Index-NumOfColumns,
-	pathCanBeDone(Grid, Value, UpMid, Row-1, NumOfColumns, UpdatedList2, UpdatedList3),
+	pathCanBeDone(Grid, Value, Visited, UpMid, Row-1, NumOfColumns, UpdatedList2, UpdatedList3),
 	UpLeft is Index-NumOfColumns-1,
-	pathCanBeDone(Grid, Value, UpLeft, Row-1, NumOfColumns, UpdatedList3, UpdatedList4),
+	pathCanBeDone(Grid, Value, Visited, UpLeft, Row-1, NumOfColumns, UpdatedList3, UpdatedList4),
 	%Mid
 	MidLeft is Index-1,
-	pathCanBeDone(Grid, Value, MidLeft, Row, NumOfColumns, UpdatedList4, UpdatedList5),
+	pathCanBeDone(Grid, Value, Visited, MidLeft, Row, NumOfColumns, UpdatedList4, UpdatedList5),
 	MidRight is Index+1,
-	pathCanBeDone(Grid, Value, MidRight, Row, NumOfColumns, UpdatedList5, UpdatedList6),
+	pathCanBeDone(Grid, Value, Visited, MidRight, Row, NumOfColumns, UpdatedList5, UpdatedList6),
 	%Down
 	DownRight is Index+NumOfColumns+1,
-	pathCanBeDone(Grid, Value, DownRight, Row+1, NumOfColumns, UpdatedList6, UpdatedList7),
+	pathCanBeDone(Grid, Value, Visited, DownRight, Row+1, NumOfColumns, UpdatedList6, UpdatedList7),
 	DownMid is Index+NumOfColumns,
-	pathCanBeDone(Grid, Value, DownMid, Row+1, NumOfColumns,  UpdatedList7, UpdatedList8),
+	pathCanBeDone(Grid, Value, Visited, DownMid, Row+1, NumOfColumns,  UpdatedList7, UpdatedList8),
 	DownLeft is Index+NumOfColumns-1,
-	pathCanBeDone(Grid, Value, DownLeft, Row+1, NumOfColumns, UpdatedList8, AuxList),
-	remove_all(Visited, AuxList, Return).
+	pathCanBeDone(Grid, Value, Visited, DownLeft, Row+1, NumOfColumns, UpdatedList8, AuxList),
+	remove_all(Visited, AuxList, Return),!.
 
 /**
- * 
- */
-remove_all([], AuxList, AuxList).  % Caso base: no hay elementos en Visited para remover
-remove_all([X|Visited], AuxList, UpdatedList) :-
-	delete(AuxList, X, TempList),  % Eliminar el elemento X de AuxList
-	remove_all(Visited, TempList, UpdatedList).
-
-/**
- * pathCanBeDone(+Grid, +FirstValue, +SecIndex, +Row, +NumOfColumns, +ActualList, -UpdatedList)
+ * pathCanBeDone(+Grid, +FirstValue, +Visited, +SecIndex, +Row, +NumOfColumns, +ActualList, -UpdatedList)
  * chequea si puede hacerse un camino desde FirstValue hacia SecValue, lo cual retorna verdadero en el caso
  * que tengan el mismo valor o SecValue sea la siguiente potencia de dos.
  */
-pathCanBeDone(Grid, FirstValue, SecIndex, Row, NumOfColumns, ActualList, UpdatedList):-
+pathCanBeDone(Grid, FirstValue, Visited, SecIndex, Row, NumOfColumns, ActualList, UpdatedList):-
 	getRow(NumOfColumns, SecIndex, 0, AuxRow),
 	AuxRow is Row,
 	nth0(SecIndex, Grid, SecValue),
-	((ActualList = []) -> (FirstValue =:= SecValue) ; (FirstValue =:= SecValue ; 2*FirstValue =:= SecValue)),
+    length(Visited, LengthList),
+	((LengthList is 0) -> (FirstValue =:= SecValue) ; (FirstValue =:= SecValue ; 2*FirstValue =:= SecValue)),
 	addLast(SecIndex, ActualList, UpdatedList);
 	UpdatedList = ActualList.
-
-/**
- * max_path(+A, +B, -Score, -Path, +PathA, +PathB)
- * Establece Score y Path con el máximo entre A y B 
- */
-max_path(A, B, Score, Path, PathA, PathB) :-
-	(A > B -> (Path = PathA, Score = A) ; (Path = PathB, Score = B)).
 
 /**
  * indexToPath(+NumOfColumns, +[H|Tail], +PathList, -Return)
@@ -115,22 +118,20 @@ indexToPath(NumOfColumns, [H|Tail], PathList, Return):-
 	indexToPath(NumOfColumns, Tail, NewPathList, Return).
 
 /**
+ * 
+ */
+remove_all([], AuxList, AuxList).  % Caso base: no hay elementos en Visited para remover
+remove_all([X|Visited], AuxList, UpdatedList) :-
+	delete(AuxList, X, TempList),  % Eliminar el elemento X de AuxList
+	remove_all(Visited, TempList, UpdatedList).
+
+/**
  * maxEqual(+Grid, +NumOfColumns, -Path)
  * calcule y muestre el camino que consiga generar el número más grande posible adyacente a otro 
  * igual(preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos.
  */
 maxEqual(Grid, NumOfColumns, Path).
 
-/**
- * max(+A, +B, -Max)
- * Retorna el máximo entre A y B
- */
-max(A, B, Max) :-
-    A >= B,
-    Max is A.
-max(A, B, Max) :-
-    A < B,
-    Max is B.
 /**
  * --------------------------------------------------------------------------------------------------------
  * 										Etapa 1 

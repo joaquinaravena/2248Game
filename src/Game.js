@@ -47,7 +47,7 @@ function Game() {
     setPath(newPath);
     console.log(JSON.stringify(newPath));
   }
-
+  
   /**
    * Called when the user finished drawing a path in the grid.
    */
