@@ -145,7 +145,8 @@ function Game() {
     setWaiting(true);
     pengine.query(queryS, (success, response) =>{
       if (success){
-        setPath(response['Path']);
+        setWaiting(false);
+        onPathChange(response['Path']);
       }else{
         setWaiting(false);
       }
@@ -177,7 +178,7 @@ function Game() {
       />
       <aside className="asideBar"> 
         <div className="asideBox">
-          <button className="buttons" onClick={collapse} disabled={waiting}>Colapsar <br/>iguales</button>
+          <button className="buttons" onClick={collapse} disabled={waiting | !showScore}>Colapsar <br/>iguales</button>
           <button className="buttons" onClick={maxMove} disabled={waiting}> Movida<br />Máxima</button>
           <button className="buttons" onClick={maxEqual} disabled={waiting}>Máximos iguales<br />adyacentes</button>
         </div>
