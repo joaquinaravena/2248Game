@@ -68,6 +68,7 @@ function Game() {
           [[2, 0], [3, 0], [4, 1], [3, 1], [2, 1], [1, 1], [1, 2], [0, 3]],
           RGrids
         ).
+      
     */
     const gridS = JSON.stringify(grid);
     const pathS = JSON.stringify(path);

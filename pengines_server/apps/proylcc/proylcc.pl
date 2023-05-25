@@ -104,8 +104,8 @@ pathCanBeDone(Grid, FirstValue, Visited, SecIndex, Row, NumOfColumns, ActualList
 	AuxRow is Row,
 	nth0(SecIndex, Grid, SecValue),
     length(Visited, LengthList),
-	%Si LengthList es 0, el camino únicamente es posible si ambos tienen el mismo valor
-	((LengthList is 0) -> (FirstValue =:= SecValue) ; (FirstValue =:= SecValue ; 2*FirstValue =:= SecValue)),
+	%Si LengthList es 1, el camino únicamente es posible si ambos tienen el mismo valor
+	((LengthList is 1) -> (FirstValue =:= SecValue) ; (FirstValue =:= SecValue ; 2*FirstValue =:= SecValue)),
 	addLast(SecIndex, ActualList, UpdatedList);
 	UpdatedList = ActualList.
 
@@ -136,54 +136,87 @@ removeAll([X|Visited], AuxList, ReturnList) :-
  * igual(preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos.
  */
 maxEqual(Grid, NumOfColumns, Path):-
-	nth0(0, Grid, Value),
-	shellMaxEqual(Grid, NumOfColumns, 0, [0], Value, Path).
+	%nth0(0, Grid, Value),
+	shellMaxEqual(Grid, NumOfColumns, 0, [], 0, Path).
 
-/**
- * 
- */
 shellMaxEqual(Grid, _, Index, ActualPath, _, ActualPath):-
 	length(Grid, LengthGrid), Index >= LengthGrid.
 
 shellMaxEqual(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path):-
 	length(Grid, LengthGrid), Index < LengthGrid,
-	% encuentra todos los caminos posibles a partir de Index	
-    findall([FinalPath, FinalScore], recMaxMove(Grid, NumOfColumns, Index, [Index], 0, [], 0, FinalPath, FinalScore), AllPaths),
-    % selecciona el camino máximo entre los encontrados
-	getMaxEqualPathFromList(Grid, NumOfColumns, AllPaths, 0, [], MaxIndexPath, MaxScore),
-	MaxScore > ActualScore, % si el camino seleccionado es mayor al actual, se reemplaza
-	indexToPath(NumOfColumns, MaxIndexPath, [], AuxPath),
-	reverse(AuxPath, NewPath), 
-	NewIndex is Index+1,
-	shellMaxEqual(Grid, NumOfColumns, NewIndex, NewPath, MaxScore, Path);
+	% encuentra todos los caminos posibles a partir de Index
+    findall([FinalPath, FinalScore], recMaxMove(Grid, NumOfColumns, Index, [Index], 0, [], 0, FinalPath, FinalScore), AuxPaths),
+    removeElement([[], 0], AuxPaths, AllPaths),
+	% selecciona el camino máximo entre los encontrados
+	getMaxEqualPathFromList(Grid, NumOfColumns, Index, AllPaths, 0, [], MaxIndexPath, MaxScore),
+	(MaxScore > ActualScore ->
+     (indexToPath(NumOfColumns, MaxIndexPath, [], AuxPath),
+     reverse(AuxPath, NewPath),
+     NewIndex is Index + 1,
+     shellMaxEqual(Grid, NumOfColumns, NewIndex, NewPath, MaxScore, Path))
+     ;
+     (NewIndex is Index + 1,
+     shellMaxEqual(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path))).
 
-	NewIndex is Index+1, 
-	shellMaxEqual(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path).
+getMaxEqualPathFromList(_, _NumOfColumns, _Index, [], MaxScore, MaxPath, MaxPath, MaxScore).
+getMaxEqualPathFromList(Grid, NumOfColumns, Index, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
+	nth0(Index, Grid, Value),
+    UpdatedScore is Score+Value,
+    smallerPow2GreaterOrEqualThan(UpdatedScore, GeneratedValue),
+	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
+	length(AdyacentsList, LengthAdyacents),
+    (UpdatedScore > MaxScore, LengthAdyacents > 0) -> (ResultPath = Path, ResultScore = UpdatedScore)
+    ;
+	(ResultPath = MaxPath, ResultScore = MaxScore).
 
+getMaxEqualPathFromList(Grid, NumOfColumns, Index, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
+	nth0(Index, Grid, Value),
+    UpdatedScore is Score+Value,
+    smallerPow2GreaterOrEqualThan(UpdatedScore, GeneratedValue),
+	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
+	length(AdyacentsList, LengthAdyacents),	
+    (UpdatedScore > MaxScore, LengthAdyacents > 0) ->
+	(getMaxEqualPathFromList(Grid, NumOfColumns, Index, Tail, UpdatedScore, Path, ResultPath, ResultScore))
+    ;
+	(getMaxEqualPathFromList(Grid, NumOfColumns, Index, Tail, MaxScore, MaxPath, ResultPath, ResultScore)).
 /**
  * getMaxEqualPathFromList(+[[Path, Score]|Tail], +MaxScore, +MaxPath, -ResultPath, -ResultScore)
  * Retorna el camino con el máximo Score de la lista de [[Path, Score], ...] ingresada, que además
  * genere un número en la grilla que sea adyacente a otro igual (preexistente)
  */
-getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
-	dif(Score, 0),
-	smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
-	findGroups(Grid, [GeneratedValue], NumOfColumns, [], AdyacentsList),
-	length(AdyacentsList, LengthAdyacents),	
-    Score >= MaxScore,
-	LengthAdyacents > 0, 
-	ResultPath = Path, ResultScore = Score;
-	ResultPath = MaxPath, ResultScore = MaxScore.
 
-getMaxEqualPathFromList(Grid, NumOfColumns, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
-	dif(Score, 0),
-	smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
-	findGroups(Grid, [GeneratedValue], NumOfColumns, [], AdyacentsList),
-	length(AdyacentsList, LengthAdyacents),	
-    Score >= MaxScore, 
-	LengthAdyacents > 0,
-	getMaxEqualPathFromList(Grid, NumOfColumns, Tail, Score, Path, ResultPath, ResultScore);
-	getMaxEqualPathFromList(Grid, NumOfColumns, Tail, MaxScore, MaxPath, ResultPath, ResultScore).
+ findEqualGroups(Grid, Index, Value, NumOfColumns, Visited, Group):-
+	getRow(NumOfColumns, Index, 0, Row),
+	%Starts at midRight
+	MidRight is Index+1,
+	checkSameGroup(Grid, MidRight, Row, NumOfColumns, Value, Visited, [], UpdatedList1),
+	%Up
+    UpRight is Index-NumOfColumns+1,
+	checkSameGroup(Grid, UpRight, Row-1, NumOfColumns, Value, Visited, UpdatedList1, UpdatedList2),
+	UpMid is Index-NumOfColumns,
+	checkSameGroup(Grid, UpMid, Row-1, NumOfColumns, Value, Visited, UpdatedList2, UpdatedList3),
+	UpLeft is Index-NumOfColumns-1,
+	checkSameGroup(Grid, UpLeft, Row-1, NumOfColumns, Value, Visited, UpdatedList3, UpdatedList4),
+	%Mid
+	MidLeft is Index-1,
+	checkSameGroup(Grid, MidLeft, Row, NumOfColumns, Value, Visited, UpdatedList4, UpdatedList5),
+	%Down
+	DownRight is Index+NumOfColumns+1,
+	checkSameGroup(Grid, DownRight, Row+1, NumOfColumns, Value, Visited, UpdatedList5, UpdatedList6),
+	DownMid is Index+NumOfColumns,
+	checkSameGroup(Grid, DownMid, Row+1, NumOfColumns, Value, Visited, UpdatedList6, UpdatedList7),
+	DownLeft is Index+NumOfColumns-1,
+	checkSameGroup(Grid, DownLeft, Row+1, NumOfColumns, Value, Visited, UpdatedList7, UpdatedList8),
+
+	concatenateWithoutReps(Visited, UpdatedList8, Group).
+
+
+removeElement(_, [], []).
+removeElement(X, [X|T], Return) :-
+    removeElement(X, T, Return).
+removeElement(X, [H|T], [H|Return]) :-
+    dif(X, H),
+    removeElement(X, T, Return).
 
 /**
  * --------------------------------------------------------------------------------------------------------
