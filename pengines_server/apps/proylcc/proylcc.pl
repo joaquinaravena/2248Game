@@ -165,8 +165,8 @@ recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux,  Results) 
 	\+ member(Adyacent, ActualPath),
 	nth0(Adyacent, Grid, AuxScore),
 	UpdatedScore is ActualScore + AuxScore,
-	addLast([ActualPath, ActualScore], Aux, NewAux),
-	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, Results).
+	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, Results),
+	addLast([ActualPath, ActualScore], Aux, NewAux).
 			
 recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results):-
 	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
@@ -176,8 +176,8 @@ recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results):-
 
 getMaxEqualPathFromList(_, _, [], MaxScore, MaxPath, MaxPath, MaxScore).
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
-	last(Path, Index),	
-    smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
+	first(Path, Index),	
+    smallerPow2GreaterOrEqualThan(Score, GeneratedValue), !,
 	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
 	length(AdyacentsList, LengthAdyacents),
     (Score > MaxScore, LengthAdyacents > 0) -> (ResultPath = Path, ResultScore = Score)
@@ -185,14 +185,16 @@ getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, R
 	(ResultPath = MaxPath, ResultScore = MaxScore).
 
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
-	last(Path, Index),	
-    smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
+	first(Path, Index),	
+    smallerPow2GreaterOrEqualThan(Score, GeneratedValue), !,
 	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
 	length(AdyacentsList, LengthAdyacents),	
     (Score > MaxScore, LengthAdyacents > 0) ->
 	(getMaxEqualPathFromList(Grid, NumOfColumns, Tail, Score, Path, ResultPath, ResultScore))
     ;
 	(getMaxEqualPathFromList(Grid, NumOfColumns, Tail, MaxScore, MaxPath, ResultPath, ResultScore)).
+
+first([H|_], H).
 /**
  * getMaxEqualPathFromList(+[[Path, Score]|Tail], +MaxScore, +MaxPath, -ResultPath, -ResultScore)
  * Retorna el camino con el máximo Score de la lista de [[Path, Score], ...] ingresada, que además
