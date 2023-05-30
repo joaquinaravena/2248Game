@@ -158,27 +158,27 @@ shellMaxEqual(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path):-
 	 (NewIndex is Index + 1,
 	 shellMaxEqual(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path))).
 
-recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux,  Results) :-
+ recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results) :-
 	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
-	dif(AdyacentsList, []),
-	member(Adyacent, AdyacentsList),
+	(\+ AdyacentsList = []) ->
+	(recMaxEqualsHelper(Grid, NumOfColumns, AdyacentsList, ActualPath, ActualScore, Aux, Results))
+	;   
+	(addLast([ActualPath, ActualScore], Aux, Results)).
+	
+recMaxEqualsHelper(_, _, [], _, _, Results, Results).
+recMaxEqualsHelper(Grid, NumOfColumns, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
 	\+ member(Adyacent, ActualPath),
 	nth0(Adyacent, Grid, AuxScore),
 	UpdatedScore is ActualScore + AuxScore,
-	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, Results),
-	addLast([ActualPath, ActualScore], Aux, NewAux).
-			
-recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results):-
-	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
-	\+ dif(AdyacentsList, []),
-	dif(ActualScore, 0), 
-	addLast([ActualPath, ActualScore], Aux, Results). 
+	addLast([ActualPath, ActualScore], Aux, NewAux),
+	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
+	recMaxEqualsHelper(Grid, NumOfColumns, Rest, ActualPath, ActualScore, FinalAux, Results). 
 
 getMaxEqualPathFromList(_, _, [], MaxScore, MaxPath, MaxPath, MaxScore).
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	
-    smallerPow2GreaterOrEqualThan(Score, GeneratedValue), !,
-	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
+    smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
+	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
 	length(AdyacentsList, LengthAdyacents),
     (Score > MaxScore, LengthAdyacents > 0) -> (ResultPath = Path, ResultScore = Score)
     ;
@@ -186,8 +186,8 @@ getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, R
 
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	
-    smallerPow2GreaterOrEqualThan(Score, GeneratedValue), !,
-	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),
+    smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
+	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
 	length(AdyacentsList, LengthAdyacents),	
     (Score > MaxScore, LengthAdyacents > 0) ->
 	(getMaxEqualPathFromList(Grid, NumOfColumns, Tail, Score, Path, ResultPath, ResultScore))
