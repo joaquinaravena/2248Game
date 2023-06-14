@@ -138,6 +138,10 @@ removeAll([X|Visited], AuxList, ReturnList) :-
 maxEqual(Grid, NumOfColumns, Path):-
 	shellMaxEqual(Grid, NumOfColumns, 0, [], 0, Path).
 
+/**
+ * shellMaxEqual(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, -Path).
+ * Encuentra el camino máximo para toda la grilla que cumpla con la condición del predicado maxEqual
+ */
 shellMaxEqual(Grid, _, Index, ActualPath, _, ActualPath):-
 	length(Grid, LengthGrid), Index >= LengthGrid.
 
@@ -158,13 +162,23 @@ shellMaxEqual(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path):-
 	 (NewIndex is Index + 1,
 	 shellMaxEqual(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path))).
 
- recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results) :-
+/**
+ * recMaxEquals(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, +Aux, -Results)
+ * Predicado recursivo que encuentra el máximo camino posible que cumpla la condición del predicado
+ * maxEquals para un único Index. 
+ */
+recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results) :-
 	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
 	(\+ AdyacentsList = []) ->
 	(recMaxEqualsHelper(Grid, NumOfColumns, AdyacentsList, ActualPath, ActualScore, Aux, Results))
 	;   
 	(addLast([ActualPath, ActualScore], Aux, Results)).
-	
+
+/**
+ * recMaxEqualsHelper(+Grid, +NumOfColumns, +[Adyacent|Rest], +ActualPath, +ActualScore, +Aux, -Results) :-
+ * Helper recursivo el cual utilizo junto a recMaxEquals para encontrar el máximo camino posible para un
+ * Index dado.
+ */	
 recMaxEqualsHelper(_, _, [], _, _, Results, Results).
 recMaxEqualsHelper(Grid, NumOfColumns, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
 	\+ member(Adyacent, ActualPath),
@@ -174,6 +188,11 @@ recMaxEqualsHelper(Grid, NumOfColumns, [Adyacent|Rest], ActualPath, ActualScore,
 	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
 	recMaxEqualsHelper(Grid, NumOfColumns, Rest, ActualPath, ActualScore, FinalAux, Results). 
 
+/**
+ * getMaxEqualPathFromList(+Grid, +NumOfColumns, +List, +MaxScore, +MaxPath, -ResultPath, -ResultScore):-
+ * Controla sobre una lista de listas, cual de ellas genera su resultado en un indice el cuál tenga mínimo
+ * un bloque adyacente de igual valor.
+ */
 getMaxEqualPathFromList(_, _, [], MaxScore, MaxPath, MaxPath, MaxScore).
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	
@@ -194,13 +213,10 @@ getMaxEqualPathFromList(Grid, NumOfColumns, [[Path, Score]|Tail], MaxScore, MaxP
     ;
 	(getMaxEqualPathFromList(Grid, NumOfColumns, Tail, MaxScore, MaxPath, ResultPath, ResultScore)).
 
-first([H|_], H).
 /**
- * getMaxEqualPathFromList(+[[Path, Score]|Tail], +MaxScore, +MaxPath, -ResultPath, -ResultScore)
- * Retorna el camino con el máximo Score de la lista de [[Path, Score], ...] ingresada, que además
- * genere un número en la grilla que sea adyacente a otro igual (preexistente)
+ * findEqualGroups(+Grid, +Index, +Value, +NumOfColumns, +Visited, -Group)
+ * Retorna una lista con los indices adyacentes que tienen el mismo valor que Value
  */
-
  findEqualGroups(Grid, Index, Value, NumOfColumns, Visited, Group):-
 	getRow(NumOfColumns, Index, 0, Row),
 	%Starts at midRight
@@ -223,9 +239,12 @@ first([H|_], H).
 	checkSameGroup(Grid, DownMid, Row+1, NumOfColumns, Value, Visited, UpdatedList6, UpdatedList7),
 	DownLeft is Index+NumOfColumns-1,
 	checkSameGroup(Grid, DownLeft, Row+1, NumOfColumns, Value, Visited, UpdatedList7, UpdatedList8),
-
 	concatenateWithoutReps(Visited, UpdatedList8, Group).
 
+/**
+ * removeAllLengths(+Length, +Paths, -Return)
+ * Remueve todas las sublistas de la listas de listas Paths con longitud <= a Length
+ */
 removeAllLengths(_, [], []).
 removeAllLengths(Length, [[Path, _]|Tail], Return):-
     length(Path, PathLength),
@@ -236,13 +255,7 @@ removeAllLengths(Length, [[Path,Score]|Tail], [[Path,Score]|Return]):-
     PathLength > Length,
     removeAllLengths(Length, Tail, Return). 
 
-removeElement(_, [], []).
-removeElement(X, [X|T], Return) :-
-    removeElement(X, T, Return).
-removeElement(X, [H|T], [H|Return]) :-
-    dif(X, H),
-    removeElement(X, T, Return).
-
+first([H|_], H).
 /**
  * --------------------------------------------------------------------------------------------------------
  * 										Etapa 1 
