@@ -150,6 +150,7 @@ shellMaxEqual(Grid, _, _, Index, ActualPath, _, ActualPath):-
 shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path):-
 	% encuentra todos los caminos posibles a partir de Index
 	nth0(Index, Grid, InitialValue),
+	dif(InitialValue, MaxValue),!,
 	recMaxEquals(Grid, NumOfColumns, MaxValue, Index, [Index], InitialValue, [], AuxPaths),	
 	removeAllLengths(1, AuxPaths, AllPaths),
 	% selecciona el camino máximo entre los encontrados
@@ -162,6 +163,10 @@ shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path
 	 ;
 	 (NewIndex is Index + 1,
 	 shellMaxEqual(Grid, NumOfColumns, MaxValue, NewIndex, ActualPath, ActualScore, Path))).
+
+shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path):-
+	NewIndex is Index + 1,
+	shellMaxEqual(Grid, NumOfColumns, MaxValue, NewIndex, ActualPath, ActualScore, Path).
 
 /**
  * recMaxEquals(+Grid, +NumOfColumns, +MaxValue, +Index, +ActualPath, +ActualScore, +Aux, -Results)
@@ -197,7 +202,6 @@ recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, [Adyacent|Rest], ActualPath, Ac
 	nth0(Adyacent, Grid, AuxScore),
 	UpdatedScore is ActualScore + AuxScore,
 	addLast([ActualPath, ActualScore], Aux, NewAux),
-	%checkMaxValue(MaxValue, UpdatedScore, ActualPath, Aux, NewAux),
 	recMaxEquals(Grid, NumOfColumns, MaxValue, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
 	recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, Rest, ActualPath, ActualScore, FinalAux, Results). 
 
