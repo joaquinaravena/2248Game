@@ -136,20 +136,21 @@ removeAll([X|Visited], AuxList, ReturnList) :-
  * igual(preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos.
  */
 maxEqual(Grid, NumOfColumns, Path):-
-	shellMaxEqual(Grid, NumOfColumns, 0, [], 0, Path).
+	%max_list(Grid, MaxValue),
+	max_member(MaxValue, Grid),
+	shellMaxEqual(Grid, NumOfColumns, MaxValue, 0, [], 0, Path).
 
 /**
  * shellMaxEqual(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, -Path).
  * Encuentra el camino máximo para toda la grilla que cumpla con la condición del predicado maxEqual
  */
-shellMaxEqual(Grid, _, Index, ActualPath, _, ActualPath):-
+shellMaxEqual(Grid, _, _, Index, ActualPath, _, ActualPath):-
 	length(Grid, LengthGrid), Index >= LengthGrid.
 
-shellMaxEqual(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path):-
-	length(Grid, LengthGrid), Index < LengthGrid,
+shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path):-
 	% encuentra todos los caminos posibles a partir de Index
-	nth0(Index, Grid, InitialValue),	
-	recMaxEquals(Grid, NumOfColumns, Index, [Index], InitialValue, [], AuxPaths),	
+	nth0(Index, Grid, InitialValue),
+	recMaxEquals(Grid, NumOfColumns, MaxValue, Index, [Index], InitialValue, [], AuxPaths),	
 	removeAllLengths(1, AuxPaths, AllPaths),
 	% selecciona el camino máximo entre los encontrados
 	getMaxEqualPathFromList(Grid, NumOfColumns, AllPaths, 0, [], MaxIndexPath, MaxScore),
@@ -157,36 +158,48 @@ shellMaxEqual(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path):-
 	 (indexToPath(NumOfColumns, MaxIndexPath, [], AuxPath),
 	 reverse(AuxPath, NewPath),
 	 NewIndex is Index + 1,
-	 shellMaxEqual(Grid, NumOfColumns, NewIndex, NewPath, MaxScore, Path))
+	 shellMaxEqual(Grid, NumOfColumns, MaxValue, NewIndex, NewPath, MaxScore, Path))
 	 ;
 	 (NewIndex is Index + 1,
-	 shellMaxEqual(Grid, NumOfColumns, NewIndex, ActualPath, ActualScore, Path))).
+	 shellMaxEqual(Grid, NumOfColumns, MaxValue, NewIndex, ActualPath, ActualScore, Path))).
 
 /**
- * recMaxEquals(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, +Aux, -Results)
+ * recMaxEquals(+Grid, +NumOfColumns, +MaxValue, +Index, +ActualPath, +ActualScore, +Aux, -Results)
  * Predicado recursivo que encuentra el máximo camino posible que cumpla la condición del predicado
  * maxEquals para un único Index. 
  */
-recMaxEquals(Grid, NumOfColumns, Index, ActualPath, ActualScore, Aux, Results) :-
+recMaxEquals(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Aux, Results) :-
 	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
 	(\+ AdyacentsList = []) ->
-	(recMaxEqualsHelper(Grid, NumOfColumns, AdyacentsList, ActualPath, ActualScore, Aux, Results))
+	(recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, AdyacentsList, ActualPath, ActualScore, Aux, Results))
 	;   
-	(addLast([ActualPath, ActualScore], Aux, Results)).
+	(checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, Results)).
 
 /**
- * recMaxEqualsHelper(+Grid, +NumOfColumns, +[Adyacent|Rest], +ActualPath, +ActualScore, +Aux, -Results) :-
+ * checkMaxValue(+MaxValue, +ActualScore, +ActualPath, +Aux, -Results)
+ * Chequea que ActualValue sea menor o igual a MaxValue, si esto se cumple lo agrega a la lista, sino
+ * retorna la lista sin cambios.
+ */
+checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, Results):-
+	ActualScore =< MaxValue,
+	addLast([ActualPath, ActualScore], Aux, Results).
+checkMaxValue(MaxValue,ActualScore,_,Aux, Aux):-
+	ActualScore > MaxValue.
+
+/**
+ * recMaxEqualsHelper(+Grid, +NumOfColumns, +MaxValue,+[Adyacent|Rest], +ActualPath, +ActualScore, +Aux, -Results) :-
  * Helper recursivo el cual utilizo junto a recMaxEquals para encontrar el máximo camino posible para un
  * Index dado.
  */	
-recMaxEqualsHelper(_, _, [], _, _, Results, Results).
-recMaxEqualsHelper(Grid, NumOfColumns, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
+recMaxEqualsHelper(_, _, _, [], _, _, Results, Results).
+recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
 	\+ member(Adyacent, ActualPath),
 	nth0(Adyacent, Grid, AuxScore),
 	UpdatedScore is ActualScore + AuxScore,
 	addLast([ActualPath, ActualScore], Aux, NewAux),
-	recMaxEquals(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
-	recMaxEqualsHelper(Grid, NumOfColumns, Rest, ActualPath, ActualScore, FinalAux, Results). 
+	%checkMaxValue(MaxValue, UpdatedScore, ActualPath, Aux, NewAux),
+	recMaxEquals(Grid, NumOfColumns, MaxValue, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
+	recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, Rest, ActualPath, ActualScore, FinalAux, Results). 
 
 /**
  * getMaxEqualPathFromList(+Grid, +NumOfColumns, +List, +MaxScore, +MaxPath, -ResultPath, -ResultScore):-
