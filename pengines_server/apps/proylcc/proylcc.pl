@@ -194,15 +194,6 @@ recMaxEqualsHelper(Grid, NumOfColumns, [Adyacent|Rest], ActualPath, ActualScore,
  * un bloque adyacente de igual valor.
  */
 getMaxEqualPathFromList(_, _, [], MaxScore, MaxPath, MaxPath, MaxScore).
-getMaxEqualPathFromList(Grid, NumOfColumns, [[Path,Score]], MaxScore, MaxPath, ResultPath, ResultScore):-
-	first(Path, Index),	
-    smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
-	findEqualGroups(Grid, Index, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
-	length(AdyacentsList, LengthAdyacents),
-    (Score > MaxScore, LengthAdyacents > 0) -> (ResultPath = Path, ResultScore = Score)
-    ;
-	(ResultPath = MaxPath, ResultScore = MaxScore).
-
 getMaxEqualPathFromList(Grid, NumOfColumns, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	
     smallerPow2GreaterOrEqualThan(Score, GeneratedValue),

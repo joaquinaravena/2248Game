@@ -15,6 +15,8 @@ function Game() {
   const [path, setPath] = useState([]);
   const [waiting, setWaiting] = useState(false);
   const [showScore, setShowScore] = useState(true);
+  const [lastPathLength, setLastPathLength] = useState(0);
+  const [showMsg, setShowMsg] = useState(true);
 
   useEffect(() => {
     // This is executed just once, after the first render.
@@ -78,7 +80,9 @@ function Game() {
     pengine.query(queryS, (success, response) => {
       if (success) {
         setScore(score + joinResult(path, grid, numOfColumns));
+        setLastPathLength(path.length);
         setPath([]);
+        setShowMsg(true);
         animateEffect(response['RGrids']);
       } else {
         setWaiting(false);
@@ -100,11 +104,11 @@ function Game() {
     } else {
       setWaiting(false);
     }
+    setShowMsg(false);
   }
   
   /**
    * Colapsa todos los grupos del mismo valor para toda la grilla, no suma puntos
-   *  
    */
   function collapse(){
     const gridS = JSON.stringify(grid);
@@ -154,6 +158,38 @@ function Game() {
     });
   }
 
+  function animateMsg(){
+    if(showMsg == true){
+      return "visible";
+    }else{
+      return "hidden";
+    }
+  }
+
+  function msgFromPathLength(){
+    let length = lastPathLength;
+    console.log(length);
+    let msg = "";
+    switch(true){
+        case length == -1: 
+          msg = "No se ha encontrado ningún camino"; break;
+        case length == 6: 
+          msg = "Genial!"; break;
+        case length == 7:
+          msg = "Perfecto!"; break;
+        case length >=8:
+          msg = "Fabuloso!"; break;
+        case length > 10:
+          msg = "Fantástico!"; break;
+        case length >14:
+          msg= "GOD!!"; break;
+        default: 
+          msg = ""; break;
+      }
+    return msg;
+  }
+
+  const msgShown = (<div className="msg" visibility={animateMsg}>{msgFromPathLength}</div>);
 
   /**
    * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
@@ -169,6 +205,9 @@ function Game() {
     <div className="game">
       <div className="header">  
         {scoreOrSquare}
+      </div>
+      <div className='msgBox'>
+        {msgShown}
       </div>
       <Board
         grid={grid}
