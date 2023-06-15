@@ -147,6 +147,7 @@ function Game() {
   function maxEqual(){
     const gridS = JSON.stringify(grid);
     const queryS = "maxEqual("+gridS+", "+numOfColumns+", Path)"; 
+    console.log(queryS);
     setWaiting(true);
     pengine.query(queryS, (success, response) =>{
       if (success){
