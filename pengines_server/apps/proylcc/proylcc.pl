@@ -12,7 +12,7 @@
 /**
  * maxMove(+Grid, +NumOfColumns, -Path)
  * calcule y muestre el camino que consiga el mayor número a partir de la configuración actual. 
- * Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos
+ * Si hay más de uno que cumpla con esta condición, retorna cualquiera de ellos
  */
 maxMove(Grid, NumOfColumns, Path):-
 	shellMaxMove(Grid, NumOfColumns, 0, [], 0, Path).
@@ -133,23 +133,24 @@ removeAll([X|Visited], AuxList, ReturnList) :-
 /**
  * maxEqual(+Grid, +NumOfColumns, -Path)
  * calcule y muestre el camino que consiga generar el número más grande posible adyacente a otro 
- * igual(preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos.
+ * igual(preexistente). Si hay más de uno que cumpla con esta condición, retorna cualquiera de ellos.
  */
 maxEqual(Grid, NumOfColumns, Path):-
 	max_member(MaxValue, Grid),
 	shellMaxEqual(Grid, NumOfColumns, MaxValue, 0, [], 0, Path).
 
 /**
- * shellMaxEqual(+Grid, +NumOfColumns, +Index, +ActualPath, +ActualScore, -Path).
- * Encuentra el camino máximo para toda la grilla que cumpla con la condición del predicado maxEqual
+ * shellMaxEqual(+Grid, +NumOfColumns, +MaxValue, +Index, +ActualPath, +ActualScore, -Path).
+ * Encuentra el camino máximo para toda la grilla que cumpla con la condición del predicado maxEqual,
+ * Utiliza condiciones de corte para optimizar el recorrido.
  */
 shellMaxEqual(Grid, _, _, Index, ActualPath, _, ActualPath):-
-	length(Grid, LengthGrid), Index >= LengthGrid.
+	length(Grid, LengthGrid), Index >= LengthGrid, !.
 
 shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path):-
 	% encuentra todos los caminos posibles a partir de Index
 	nth0(Index, Grid, InitialValue),
-	dif(InitialValue, MaxValue),!,
+	dif(InitialValue, MaxValue), dif(MaxValue, ActualScore), !,
 	recMaxEquals(Grid, NumOfColumns, MaxValue, Index, [Index], InitialValue, [], AuxPaths),	
 	removeAllLengths(1, AuxPaths, AllPaths),
 	% selecciona el camino máximo entre los encontrados
@@ -174,10 +175,24 @@ shellMaxEqual(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Path
  */
 recMaxEquals(Grid, NumOfColumns, MaxValue, Index, ActualPath, ActualScore, Aux, Results) :-
 	findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
-	(\+ AdyacentsList = []) ->
+	(\+ AdyacentsList = [], ActualScore =< MaxValue) ->
 	(recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, AdyacentsList, ActualPath, ActualScore, Aux, Results))
 	;   
 	(checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, Results)).
+
+/**
+ * recMaxEqualsHelper(+Grid, +NumOfColumns, +MaxValue,+[Adyacent|Rest], +ActualPath, +ActualScore, +Aux, -Results) :-
+ * Helper recursivo el cual utilizo junto a recMaxEquals para encontrar el máximo camino posible para un
+ * Index dado.
+ */	
+recMaxEqualsHelper(_, _, _, [], _, _, Results, Results).
+recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
+	\+ member(Adyacent, ActualPath),
+	nth0(Adyacent, Grid, AuxScore),
+	UpdatedScore is ActualScore + AuxScore,
+    checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, NewAux),
+	recMaxEquals(Grid, NumOfColumns, MaxValue, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
+	recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, Rest, ActualPath, ActualScore, FinalAux, Results). 
 
 /**
  * checkMaxValue(+MaxValue, +ActualScore, +ActualPath, +Aux, -Results)
@@ -190,29 +205,16 @@ checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, Results):-
 checkMaxValue(_,_,_,Aux, Aux).
 
 /**
- * recMaxEqualsHelper(+Grid, +NumOfColumns, +MaxValue,+[Adyacent|Rest], +ActualPath, +ActualScore, +Aux, -Results) :-
- * Helper recursivo el cual utilizo junto a recMaxEquals para encontrar el máximo camino posible para un
- * Index dado.
- */	
-recMaxEqualsHelper(_, _, _, [], _, _, Results, Results).
-recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, [Adyacent|Rest], ActualPath, ActualScore, Aux, Results) :-
-	\+ member(Adyacent, ActualPath),
-	nth0(Adyacent, Grid, AuxScore),
-	UpdatedScore is ActualScore + AuxScore,
-	%addLast([ActualPath, ActualScore], Aux, NewAux),
-    checkMaxValue(MaxValue, ActualScore, ActualPath, Aux, NewAux),
-	recMaxEquals(Grid, NumOfColumns, MaxValue, Adyacent, [Adyacent|ActualPath], UpdatedScore, NewAux, FinalAux),
-	recMaxEqualsHelper(Grid, NumOfColumns, MaxValue, Rest, ActualPath, ActualScore, FinalAux, Results). 
-
-/**
- * getMaxEqualPathFromList(+Grid, +NumOfColumns, +List, +MaxScore, +MaxPath, -ResultPath, -ResultScore):-
+ * getMaxEqualPathFromList(+Grid, +NumOfColumns, +MaxValue, +ActualValue, +List, +MaxScore, +MaxPath, -ResultPath, -ResultScore):-
  * Controla sobre una lista de listas, cual de ellas genera su resultado en un indice el cuál tenga mínimo
- * un bloque adyacente de igual valor.
+ * un bloque adyacente de igual valor
+ * Utiliza MaxValue y ActualValue como condiciones de corte para optimizar el recorrido.
  */
 getMaxEqualPathFromList(_, _, _, _,[], MaxScore, MaxPath, MaxPath, MaxScore).
 getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	%Index es el último bloque del camino
     smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
+	%Condiciones de corte para optimización
 	GeneratedValue =< MaxValue, GeneratedValue > ActualValue, Score > MaxScore, !,
     reverse(Path, AuxPath),
 	deletePathInGrid(Grid, AuxPath, 0, GridEliminated),
@@ -222,7 +224,7 @@ getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, [[Path, Score
 	shellGravity(0, NumOfColumns, NewColumnsList, GridAux),
     nth0(GravityIndex, GridAux, -1),
     replace(GridAux, GravityIndex, GeneratedValue, UpdatedAux),
-	%GridAux es la grid aplicando la gravedad de Path
+	%GridAux es la grid aplicando la gravedad de eliminar Path
 	findEqualGroups(UpdatedAux, GravityIndex, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
 	(dif(AdyacentsList, [])) -> 
 	(getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, Tail, Score, Path, ResultPath, ResultScore));
@@ -230,6 +232,21 @@ getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, [[Path, Score
     
 getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, [[_, _]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
     getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, ActualValue, Tail, MaxScore, MaxPath, ResultPath, ResultScore).
+
+/**
+ * shellGravity(+Index, +NumOfColumns, +ColumnsList, -NewColumnsList)
+ * Aplica gravedad retornando una única grilla sin generar bloques nuevos.
+ */
+shellGravity(Index, NumOfColumns, ColumnsList, GridGravity):-
+	Index >= NumOfColumns, !,
+    nth0(0, ColumnsList, Columns),
+    columnsToGrid(Columns, ColumnsList,0, [], GridGravity).
+
+shellGravity(Index, NumOfColumns, ColumnsList, NewColumnsList):-
+	nth0(Index,ColumnsList, NextList),
+  	gravityOneColumn(NextList, Index, ColumnsList, GravityList),
+	NewIndex is Index+1,
+	shellGravity(NewIndex, NumOfColumns, GravityList, NewColumnsList).
 
 /**
  * findEqualGroups(+Grid, +Index, +Value, +NumOfColumns, +Visited, -Group)
@@ -260,34 +277,9 @@ findEqualGroups(Grid, Index, Value, NumOfColumns, Visited, Group):-
 	concatenateWithoutReps(Visited, UpdatedList8, Group).
 
 /**
- * removeAllLengths(+Length, +Paths, -Return)
- * Remueve todas las sublistas de la listas de listas Paths con longitud <= a Length
- */
-removeAllLengths(_, [], []).
-removeAllLengths(Length, [[Path, _]|Tail], Return):-
-    length(Path, PathLength),
-    PathLength =< Length, !,
-    removeAllLengths(Length, Tail, Return).
-removeAllLengths(Length, [[Path,Score]|Tail], [[Path,Score]|Return]):-
-    removeAllLengths(Length, Tail, Return). 
-
-/**
- * 
- */
-shellGravity(Index, NumOfColumns, ColumnsList, GridGravity):-
-	Index >= NumOfColumns, !,
-    nth0(0, ColumnsList, Columns),
-    columnsToGrid(Columns, ColumnsList,0, [], GridGravity).
-
-shellGravity(Index, NumOfColumns, ColumnsList, NewColumnsList):-
-	nth0(Index,ColumnsList, NextList),
-  	gravityOneColumn(NextList, Index, ColumnsList, GravityList),
-	NewIndex is Index+1,
-	shellGravity(NewIndex, NumOfColumns, GravityList, NewColumnsList).
-
-/**
  * gravityOneColumn(+List, +IndexOfList, +ColumnsList, -GravityList)
- * 
+ * Aplica gravedad sobre una columna, y agrega números 1 en lugar de agregar bloques nuevos, para cumplir
+ * con la condición del predicado MaxEquals (debe ser adyacente a otro bloque igual preexistente).
  */
 gravityOneColumn(List, IndexOfList, ColumnsList, NewColumnsList):-
 	\+ member(0, List), !,
@@ -298,6 +290,18 @@ gravityOneColumn(List, IndexOfList, ColumnsList, ReturnList):-
 	removeIndex(List, IndexElem, ListElim),
 	addFirst(1, ListElim, Aux),
 	gravityOneColumn(Aux, IndexOfList, ColumnsList, ReturnList).
+
+/**
+ * removeAllLengths(+Length, +Paths, -Return)
+ * Remueve todas las sublistas de la listas de listas Paths con longitud <= a Length
+ */
+removeAllLengths(_, [], []).
+removeAllLengths(Length, [[Path, _]|Tail], Return):-
+    length(Path, PathLength),
+    PathLength =< Length, !,
+    removeAllLengths(Length, Tail, Return).
+removeAllLengths(Length, [[Path,Score]|Tail], [[Path,Score]|Return]):-
+    removeAllLengths(Length, Tail, Return). 
 
 first([H|_], H).
 /**
