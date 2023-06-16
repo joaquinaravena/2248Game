@@ -209,7 +209,7 @@ function Game() {
       </div>
       <ToastContainer
           position="top-center"
-          autoClose={2000}
+          autoClose={600}
           hideProgressBar
           newestOnTop={true}
           closeOnClick
