@@ -126,7 +126,7 @@ function Game() {
   }
 
   /**
-   * 
+   * calcula y muestra el camino que consiga el mayor número a partir de la configuración actual.
    * 
    */
   function maxMove(){
@@ -181,7 +181,7 @@ function Game() {
           msg = "Perfecto!"; break;
         case length === 8:
           msg = "Fabuloso!"; break;
-        case length < 11:
+        case length > 8 & length < 11:
           msg = "Fantástico!"; break;
         case length >= 11:
           msg= "GOD!!"; break;
