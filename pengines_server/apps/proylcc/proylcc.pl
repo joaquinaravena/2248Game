@@ -213,33 +213,21 @@ getMaxEqualPathFromList(_, _, _,[], MaxScore, MaxPath, MaxPath, MaxScore).
 getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, [[Path, Score]|Tail], MaxScore, MaxPath, ResultPath, ResultScore):-
 	first(Path, Index),	%Index es el último bloque del camino
     smallerPow2GreaterOrEqualThan(Score, GeneratedValue),
-   	%puede optimizarse ya que el score ya fue calculado
     reverse(Path, AuxPath),
 	deletePathInGrid(Grid, AuxPath, 0, GridEliminated),
 	initializeLists([], NumOfColumns, ColumnsList),
-	gridToColumns(GridEliminated, ColumnsList,0, NewColumnsList),
-    metodo(Index, NumOfColumns, NewColumnsList, GravityIndex),    
+    replace(GridEliminated, Index, -1, UpdatedEliminated),
+	gridToColumns(UpdatedEliminated, ColumnsList,0, NewColumnsList),
 	shellGravity(0, NumOfColumns, NewColumnsList, GridAux),
+    nth0(GravityIndex, GridAux, -1),
+    replace(GridAux, GravityIndex, GeneratedValue, UpdatedAux),
 	%GridAux es la grid aplicando la gravedad de Path
-	findEqualGroups(GridAux, GravityIndex, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
+	findEqualGroups(UpdatedAux, GravityIndex, GeneratedValue, NumOfColumns, [], AdyacentsList),!,
 	(GeneratedValue =< MaxValue, dif(AdyacentsList, []), Score > MaxScore)-> 
 	(getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, Tail, Score, Path, ResultPath, ResultScore))
     ;
 	(getMaxEqualPathFromList(Grid, NumOfColumns, MaxValue, Tail, MaxScore, MaxPath, ResultPath, ResultScore)).
 
-metodo(Index, NumOfColumns, ColumnsList, GravityIndex):-
-	ColumnIndex is Index mod NumOfColumns,
-  nth0(ColumnIndex, ColumnsList, Column),
-  ultimo_indice(0, Column, AuxIndex),
-  Aux is NumOfColumns*(AuxIndex) + ColumnIndex,
-  Index < Aux, GravityIndex is Aux;
-  GravityIndex is Index.
-  
- ultimo_indice(Elemento, Lista, Indice) :-
-   reverse(Lista, ListaReversa),
-   nth0(Aux, ListaReversa, Elemento),
-   length(Lista, Length),
-   Indice is Length-1-Aux.
 /**
  * findEqualGroups(+Grid, +Index, +Value, +NumOfColumns, +Visited, -Group)
  * Retorna una lista con los indices adyacentes que tienen el mismo valor que Value
