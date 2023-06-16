@@ -22,10 +22,9 @@ maxMove(Grid, NumOfColumns, Path):-
  * Encuentra el camino máximo para toda la grilla, recorriendola por índices.
  */
 shellMaxMove(Grid, _, Index, ActualPath, _, ActualPath):-
-	length(Grid, LengthGrid), Index >= LengthGrid.
+	length(Grid, LengthGrid), Index >= LengthGrid, !.
 
 shellMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path) :-
-	length(Grid, LengthGrid), Index < LengthGrid,
 	% encuentra todos los caminos posibles a partir de Index	
     findall([FinalPath, FinalScore], recMaxMove(Grid, NumOfColumns, Index, [Index], 0, [], -inf, FinalPath, FinalScore), AllPaths),
     % selecciona el camino máximo entre los encontrados
@@ -45,16 +44,14 @@ shellMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, Path) :-
  */
 recMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, MaxPath, MaxScore, FinalPath, FinalScore) :-
     findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
-    dif(AdyacentsList, []),
+    dif(AdyacentsList, []), !,
     member(Adyacent, AdyacentsList),
     \+ member(Adyacent, ActualPath),
     nth0(Adyacent, Grid, AuxScore),
     UpdatedScore is ActualScore + AuxScore,
     recMaxMove(Grid, NumOfColumns, Adyacent, [Adyacent|ActualPath], UpdatedScore, MaxPath, MaxScore, FinalPath, FinalScore).
 
-recMaxMove(Grid, NumOfColumns, Index, ActualPath, ActualScore, MaxPath, MaxScore, FinalPath, FinalScore):-
-    findAllPosiblePaths(Grid, NumOfColumns, Index, ActualPath, AdyacentsList),
-    \+ dif(AdyacentsList, []),
+recMaxMove(_, _, _, ActualPath, ActualScore, MaxPath, MaxScore, FinalPath, FinalScore):-
     (ActualScore > MaxScore) ->  (FinalPath = ActualPath, FinalScore = ActualScore); (FinalPath = MaxPath, FinalScore = MaxScore).
 
 /**

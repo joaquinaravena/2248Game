@@ -31,26 +31,6 @@ body {
   font-family: cursive;
 }
 
-.msgBox{
-  border-radius: 20px;
-  height: auto;
-  width: auto;
-  border-style: dotted;
-  border-color: gold;
-  background-color: rgba(2, 0, 139, 0.5);
-  position:absolute;
-  top:350px;
-  visibility:visible;
-}
-
-.msg{
-  font-size: 50px;
-  color: gold;
-  font-family: cursive;
-  height: auto;
-  width: auto;
-}
-
 .buttons{
   height: 60px;
   width: auto;
@@ -111,7 +91,9 @@ body {
 }
 
 .rise {
-  margin: 2px; 
+  margin: 1px;
+  border-style:inset;
+  border-color: goldenrod;
 }
 
 .riseOnHover:hover {

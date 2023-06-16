@@ -3,11 +3,13 @@ import PengineClient from './PengineClient';
 import Board from './Board';
 import Square from './Square';
 import { joinResult } from './util';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 let pengine;
 
 function Game() {
-
+  let lastPathLength = 0;
   // State
   const [grid, setGrid] = useState(null);
   const [numOfColumns, setNumOfColumns] = useState(null);
@@ -15,8 +17,6 @@ function Game() {
   const [path, setPath] = useState([]);
   const [waiting, setWaiting] = useState(false);
   const [showScore, setShowScore] = useState(true);
-  const [lastPathLength, setLastPathLength] = useState(0);
-  const [showMsg, setShowMsg] = useState(true);
 
   useEffect(() => {
     // This is executed just once, after the first render.
@@ -80,10 +80,10 @@ function Game() {
     pengine.query(queryS, (success, response) => {
       if (success) {
         setScore(score + joinResult(path, grid, numOfColumns));
-        setLastPathLength(path.length);
+        msgFromPathLength(path.length);
         setPath([]);
-        setShowMsg(true);
         animateEffect(response['RGrids']);
+
       } else {
         setWaiting(false);
       }
@@ -100,11 +100,10 @@ function Game() {
     if (restRGrids.length > 0) {
       setTimeout(() => {
         animateEffect(restRGrids);
-      }, 500);
+      }, 350);
     } else {
       setWaiting(false);
     }
-    setShowMsg(false);
   }
   
   /**
@@ -116,6 +115,9 @@ function Game() {
     setWaiting(true);
     pengine.query(queryS, (success, response) =>{
       if (success){
+        if(response['RGrids'].length === 1){
+          msgFromPathLength(-2);
+        }
         animateEffect(response['RGrids']);
       }else{
         setWaiting(false);
@@ -134,6 +136,9 @@ function Game() {
     pengine.query(queryS, (success, response) =>{
       if (success){
         setWaiting(false);
+        if(response['Path'].length === 0){
+          msgFromPathLength(-1);
+        }
         onPathChange(response['Path']);
       }else{
         setWaiting(false);
@@ -152,6 +157,9 @@ function Game() {
     pengine.query(queryS, (success, response) =>{
       if (success){
         setWaiting(false);
+        if(response['Path'].length === 0){
+          msgFromPathLength(-1);
+        }
         onPathChange(response['Path']);
       }else{
         setWaiting(false);
@@ -159,38 +167,30 @@ function Game() {
     });
   }
 
-  function animateMsg(){
-    if(showMsg == true){
-      return "visible";
-    }else{
-      return "hidden";
-    }
-  }
-
-  function msgFromPathLength(){
-    let length = lastPathLength;
+  function msgFromPathLength(length){
     console.log(length);
     let msg = "";
     switch(true){
-        case length == -1: 
+        case length === -2:
+          msg = "No hay bloques para colapsar"; break;
+        case length === -1: 
           msg = "No se ha encontrado ningún camino"; break;
-        case length == 6: 
+        case length === 6: 
           msg = "Genial!"; break;
-        case length == 7:
+        case length === 7:
           msg = "Perfecto!"; break;
-        case length >=8:
+        case length === 8:
           msg = "Fabuloso!"; break;
-        case length > 10:
+        case length < 11:
           msg = "Fantástico!"; break;
-        case length >14:
+        case length >= 11:
           msg= "GOD!!"; break;
         default: 
           msg = ""; break;
       }
-    return msg;
+    if(msg != "")
+      return toast(msg);
   }
-
-  const msgShown = (<div className="msg" visibility={animateMsg}>{msgFromPathLength}</div>);
 
   /**
    * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
@@ -207,9 +207,17 @@ function Game() {
       <div className="header">  
         {scoreOrSquare}
       </div>
-      <div className='msgBox'>
-        {msgShown}
-      </div>
+      <ToastContainer
+          position="top-center"
+          autoClose={2000}
+          hideProgressBar
+          newestOnTop={true}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"/>
       <Board
         grid={grid}
         numOfColumns={numOfColumns}
