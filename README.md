@@ -1,74 +1,74 @@
-# 2248 en React + Prolog
+# 2248 in React + Prolog
 
-Implementación de un 2248 interactivo, usando React del lado del cliente, y Prolog del lado del servidor.
+Interactive 2248 game implementation using React on the client side and Prolog on the server side.
 
-## Para correr el proyecto
+## Running the project
 
-### Método 1: Usando Docker (Recomendado)
+### Method 1: Using Docker (Recommended)
 
-Esta es la forma más fácil y rápida de ejecutar el proyecto:
+This is the easiest and fastest way to run the project:
 
-1. **Asegúrate de tener Docker instalado** en tu sistema.
+1. **Make sure you have Docker installed** on your system.
 
-2. **Ejecuta el siguiente comando** en el directorio raíz del proyecto:
+2. **Run the following command** in the project root directory:
 
    ```bash
    docker-compose up --build
    ```
 
-3. **Espera a que se construyan y levanten ambos servicios:**
+3. **Wait for both services to build and start:**
 
-   - El servidor Prolog/Pengines estará disponible en http://localhost:3030
-   - La aplicación React estará disponible en http://localhost:3000
+   - The Prolog/Pengines server will be available at http://localhost:3030
+   - The React application will be available at http://localhost:3000
 
-4. **Abre tu navegador** y ve a [http://localhost:3000](http://localhost:3000) para jugar.
+4. **Open your browser** and go to [http://localhost:3000](http://localhost:3000) to play.
 
-5. **Para ver la consola web admin** del servidor Prolog, ve a http://localhost:3030/admin/server.html
+5. **To see the web admin console** of the Prolog server, go to http://localhost:3030/admin/server.html
 
-¡Listo! No necesitas instalar Node.js ni SWI-Prolog manualmente.
+Done! You don't need to install Node.js or SWI-Prolog manually.
 
-### Método 2: Instalación manual (Alternativa)
+### Method 2: Manual installation (Alternative)
 
-Si prefieres ejecutar los servicios manualmente:
+If you prefer to run the services manually:
 
-#### Setup y ejecución del servidor Pengines
+#### Setup and execution of the Pengines server
 
-- [Descargar](https://www.swi-prolog.org/Download.html) e instalar el SWI-Prolog.
+- [Download](https://www.swi-prolog.org/Download.html) and install SWI-Prolog.
 
-- Levantar el servidor ejecutando en SWI-Prolog el `run.pl` en la carpeta `pengines_server`:
+- Start the server by running the `run.pl` file in SWI-Prolog from the `pengines_server` folder:
 
   `cd pengines_server`\
   `swipl run.pl`
 
-  o haciendo doble click sobre el `run.pl`.
+  or by double-clicking on `run.pl`.
 
-  Aclaración: no hacer `swipl pengines_server/run.pl` porque algunas referencias luego no funcionan.
+  Note: don't run `swipl pengines_server/run.pl` because some references won't work later.
 
-  La primera vez que se ejecute el run.pl se pedirá definir un username y un password para acceder a la consola web admin del servidor, elegir cualquiera (por ejemplo, username: 'lcc' y password: 'lccdcic'), pero no dejar vacíos.
+  The first time you run run.pl, you'll be asked to define a username and password to access the server's web admin console. Choose any (for example, username: 'lcc' and password: 'lccdcic'), but don't leave them empty.
 
-- El servidor escuchará en http://localhost:3030
+- The server will listen on http://localhost:3030
 
-- Ir a http://localhost:3030/admin/server.html para ver la consola web admin.
+- Go to http://localhost:3030/admin/server.html to see the web admin console.
 
-- La carpeta `pengines-master/apps/proylcc` contiene el código prolog del 2248. Cada vez que se modifica este código es necesario bajar y volver a levantar el servidor para que se reflejen los cambios.
+- The `pengines-master/apps/proylcc` folder contains the Prolog code for the 2248 game. Every time you modify this code, you need to stop and restart the server for the changes to take effect.
 
-#### Setup y ejecución de la aplicación React
+#### Setup and execution of the React application
 
-- Descargar una versión reciente de [Node.js](https://nodejs.org/en/).
+- Download a recent version of [Node.js](https://nodejs.org/en/).
 
-- Ejecutar
+- Run
 
   `npm install`
 
-  en el directorio del proyecto para instalar las dependencias (librerías)
-  localmente, en la carpeta `node_modules`.
+  in the project directory to install dependencies (libraries)
+  locally in the `node_modules` folder.
 
-- Ejecutar
+- Run
 
   `npm start`
 
-  en el directorio del proyecto para correr la app en modo desarrollo.
+  in the project directory to run the app in development mode.
 
-- Abrir [http://localhost:3000](http://localhost:3000) para ver la aplicación en el browser.
+- Open [http://localhost:3000](http://localhost:3000) to see the application in the browser.
 
-- La página se refresca automáticamente cuando cambia el código.
+- The page refreshes automatically when the code changes.
