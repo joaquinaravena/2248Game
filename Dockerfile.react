@@ -1,0 +1,16 @@
+FROM node:18
+
+WORKDIR /app
+
+# Instala deps con cache
+COPY package*.json ./
+RUN npm ci --no-audit --no-fund || npm install
+
+# Copia el código del frontend (raíz del repo)
+COPY . .
+
+# CRA/Vite necesitan escuchar en 0.0.0.0 dentro del contenedor
+ENV HOST=0.0.0.0
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]
