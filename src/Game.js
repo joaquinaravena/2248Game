@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PengineClient from './PengineClient';
 import Board from './Board';
 import Square from './Square';
@@ -9,7 +9,6 @@ import 'react-toastify/dist/ReactToastify.css';
 let pengine;
 
 function Game() {
-  let lastPathLength = 0;
   // State
   const [grid, setGrid] = useState(null);
   const [numOfColumns, setNumOfColumns] = useState(null);
@@ -188,7 +187,7 @@ function Game() {
         default: 
           msg = ""; break;
       }
-    if(msg != "")
+    if(msg !== "")
       return toast(msg);
   }
 
