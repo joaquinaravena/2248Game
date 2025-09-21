@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import PengineClient from './PengineClient';
-import Board from './Board';
-import Square from './Square';
-import { joinResult } from './util';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from "react";
+import PengineClient from "./PengineClient";
+import Board from "./Board";
+import Square from "./Square";
+import { joinResult } from "./util";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Tooltip } from "react-tooltip";
 
 let pengine;
 
@@ -27,11 +28,11 @@ function Game() {
    */
   function onServerReady(instance) {
     pengine = instance;
-    const queryS = 'init(Grid, NumOfColumns)';
+    const queryS = "init(Grid, NumOfColumns)";
     pengine.query(queryS, (success, response) => {
       if (success) {
-        setGrid(response['Grid']);
-        setNumOfColumns(response['NumOfColumns']);
+        setGrid(response["Grid"]);
+        setNumOfColumns(response["NumOfColumns"]);
       }
     });
   }
@@ -48,7 +49,7 @@ function Game() {
     setPath(newPath);
     console.log(JSON.stringify(newPath));
   }
-  
+
   /**
    * Called when the user finished drawing a path in the grid.
    */
@@ -73,7 +74,8 @@ function Game() {
     */
     const gridS = JSON.stringify(grid);
     const pathS = JSON.stringify(path);
-    const queryS = "join(" + gridS + "," + numOfColumns + "," + pathS + ", RGrids)";
+    const queryS =
+      "join(" + gridS + "," + numOfColumns + "," + pathS + ", RGrids)";
     setWaiting(true);
     setShowScore(true);
     pengine.query(queryS, (success, response) => {
@@ -81,8 +83,7 @@ function Game() {
         setScore(score + joinResult(path, grid, numOfColumns));
         msgFromPathLength(path.length);
         setPath([]);
-        animateEffect(response['RGrids']);
-
+        animateEffect(response["RGrids"]);
       } else {
         setWaiting(false);
       }
@@ -90,7 +91,7 @@ function Game() {
   }
 
   /**
-   * Displays each grid of the sequence as the current grid in 1sec intervals.
+   * Displays each grid of the sequence as the current grid with smooth transitions.
    * @param {number[][]} rGrids a sequence of grids.
    */
   function animateEffect(rGrids) {
@@ -99,124 +100,146 @@ function Game() {
     if (restRGrids.length > 0) {
       setTimeout(() => {
         animateEffect(restRGrids);
-      }, 350);
+      }, 400);
     } else {
       setWaiting(false);
     }
   }
-  
+
   /**
-   * Colapsa todos los grupos del mismo valor para toda la grilla, no suma puntos
+   * Collapses all groups of the same value for the entire grid, does not add points
    */
-  function collapse(){
+  function collapse() {
+    // Show warning toast
+    toast.warning("Collapsing equal blocks...", {
+      position: "top-center",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+
     const gridS = JSON.stringify(grid);
-    const queryS = "collapse("+gridS+", "+numOfColumns+", RGrids)"; 
+    const queryS = "collapse(" + gridS + ", " + numOfColumns + ", RGrids)";
     setWaiting(true);
-    pengine.query(queryS, (success, response) =>{
-      if (success){
-        if(response['RGrids'].length === 1){
+    pengine.query(queryS, (success, response) => {
+      if (success) {
+        if (response["RGrids"].length === 1) {
           msgFromPathLength(-2);
         }
-        animateEffect(response['RGrids']);
-      }else{
+        animateEffect(response["RGrids"]);
+      } else {
         setWaiting(false);
       }
     });
   }
 
   /**
-   * calcula y muestra el camino que consiga el mayor número a partir de la configuración actual.
-   * 
+   * Calculates and shows the path that achieves the highest number from the current configuration.
+   *
    */
-  function maxMove(){
+  function maxMove() {
     const gridS = JSON.stringify(grid);
-    const queryS = "maxMove("+gridS+", "+numOfColumns+", Path)"; 
+    const queryS = "maxMove(" + gridS + ", " + numOfColumns + ", Path)";
     setWaiting(true);
-    pengine.query(queryS, (success, response) =>{
-      if (success){
+    pengine.query(queryS, (success, response) => {
+      if (success) {
         setWaiting(false);
-        if(response['Path'].length === 0){
+        if (response["Path"].length === 0) {
           msgFromPathLength(-1);
         }
-        onPathChange(response['Path']);
-      }else{
+        onPathChange(response["Path"]);
+      } else {
         setWaiting(false);
       }
     });
   }
-/**
- * calcule y muestre el camino que consiga generar el número más grande posible adyacente a otro igual 
- * (preexistente). Si hay más de uno que cumpla con esta condición, mostrar cualquiera de ellos. 
- */
-  function maxEqual(){
+  /**
+   * Calculate and show the path that generates the largest possible number adjacent to another equal
+   * (preexisting). If there is more than one that meets this condition, show any of them.
+   */
+  function maxEqual() {
     const gridS = JSON.stringify(grid);
-    const queryS = "maxEqual("+gridS+", "+numOfColumns+", Path)"; 
+    const queryS = "maxEqual(" + gridS + ", " + numOfColumns + ", Path)";
     console.log(queryS);
     setWaiting(true);
-    pengine.query(queryS, (success, response) =>{
-      if (success){
+    pengine.query(queryS, (success, response) => {
+      if (success) {
         setWaiting(false);
-        if(response['Path'].length === 0){
+        if (response["Path"].length === 0) {
           msgFromPathLength(-1);
         }
-        onPathChange(response['Path']);
-      }else{
+        onPathChange(response["Path"]);
+      } else {
         setWaiting(false);
       }
     });
   }
 
-  function msgFromPathLength(length){
+  function msgFromPathLength(length) {
     console.log(length);
     let msg = "";
-    switch(true){
-        case length === -2:
-          msg = "No hay bloques para colapsar"; break;
-        case length === -1: 
-          msg = "No se ha encontrado ningún camino"; break;
-        case length === 6: 
-          msg = "Genial!"; break;
-        case length === 7:
-          msg = "Perfecto!"; break;
-        case length === 8:
-          msg = "Fabuloso!"; break;
-        case length > 8 & length < 11:
-          msg = "Fantástico!"; break;
-        case length >= 11:
-          msg= "GOD!!"; break;
-        default: 
-          msg = ""; break;
-      }
-    if(msg !== "")
-      return toast(msg);
+    switch (true) {
+      case length === -2:
+        msg = "No blocks to collapse";
+        break;
+      case length === -1:
+        msg = "No path found";
+        break;
+      case length === 6:
+        msg = "Great!";
+        break;
+      case length === 7:
+        msg = "Perfect!";
+        break;
+      case length === 8:
+        msg = "Fabulous!";
+        break;
+      case (length > 8) & (length < 11):
+        msg = "Fantastic!";
+        break;
+      case length >= 11:
+        msg = "AMAZING!";
+        break;
+      default:
+        msg = "";
+        break;
+    }
+    if (msg !== "") return toast(msg);
   }
 
   /**
-   * utilizada para mostrar el puntaje o el square que se genera cuando corresponda
+   * Used to display the score or the square that is generated when appropriate
    */
-  const scoreOrSquare = showScore ? 
-    (<div className="score">{score}</div>) : 
-    (<Square value={joinResult(path, grid, numOfColumns)} className="score"/>);
+  const scoreOrSquare = showScore ? (
+    <div className="score">{score}</div>
+  ) : (
+    <Square value={joinResult(path, grid, numOfColumns)} className="score" />
+  );
 
   if (grid === null) {
     return null;
   }
   return (
     <div className="game">
-      <div className="header">  
-        {scoreOrSquare}
-      </div>
+      <div className="header">{scoreOrSquare}</div>
       <ToastContainer
-          position="top-center"
-          autoClose={600}
-          hideProgressBar
-          newestOnTop={true}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"/>
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        toastClassName="custom-toast"
+        bodyClassName="custom-toast-body"
+        progressClassName="custom-toast-progress"
+      />
       <Board
         grid={grid}
         numOfColumns={numOfColumns}
@@ -224,12 +247,97 @@ function Game() {
         onPathChange={onPathChange}
         onDone={onPathDone}
       />
-      <aside className="asideBar"> 
+      <aside className="asideBar">
         <div className="asideBox">
-          <button className="buttons" onClick={collapse} disabled={waiting | !showScore}>Colapsar <br/>iguales</button>
-          <button className="buttons" onClick={maxMove} disabled={waiting}> Movida<br />Máxima</button>
-          <button className="buttons" onClick={maxEqual} disabled={waiting}>Máximos iguales<br />adyacentes</button>
+          <button
+            className="buttons"
+            onClick={collapse}
+            disabled={waiting | !showScore}
+            data-tooltip-id="collapse-tooltip"
+            data-tooltip-content="Collapse equal adjacent numbers to create higher values (NO POINTS)"
+          >
+            Collapse <br />
+            Equals
+          </button>
+          <button
+            className="buttons"
+            onClick={maxMove}
+            disabled={waiting}
+            data-tooltip-id="maxmove-tooltip"
+            data-tooltip-content="Find the path that creates the highest possible number"
+          >
+            Maximum <br />
+            Move
+          </button>
+          <button
+            className="buttons"
+            onClick={maxEqual}
+            disabled={waiting}
+            data-tooltip-id="maxequal-tooltip"
+            data-tooltip-content="Find the path with maximum adjacent equal numbers"
+          >
+            Maximum Adjacent
+            <br />
+            Equals
+          </button>
         </div>
+        <Tooltip
+          id="collapse-tooltip"
+          place="top"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            color: "#333",
+            fontSize: "12px",
+            fontWeight: "500",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            border: "1px solid rgba(255, 255, 255, 0.8)",
+            backdropFilter: "blur(10px)",
+            maxWidth: "300px",
+            textAlign: "center",
+            lineHeight: "1.3",
+            zIndex: 1000,
+          }}
+        />
+        <Tooltip
+          id="maxmove-tooltip"
+          place="top"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            color: "#333",
+            fontSize: "12px",
+            fontWeight: "500",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            border: "1px solid rgba(255, 255, 255, 0.8)",
+            backdropFilter: "blur(10px)",
+            maxWidth: "300px",
+            textAlign: "center",
+            lineHeight: "1.3",
+            zIndex: 1000,
+          }}
+        />
+        <Tooltip
+          id="maxequal-tooltip"
+          place="top"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            color: "#333",
+            fontSize: "12px",
+            fontWeight: "500",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            border: "1px solid rgba(255, 255, 255, 0.8)",
+            backdropFilter: "blur(10px)",
+            maxWidth: "300px",
+            textAlign: "center",
+            lineHeight: "1.3",
+            zIndex: 1000,
+          }}
+        />
       </aside>
     </div>
   );

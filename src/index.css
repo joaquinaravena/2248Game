@@ -1,135 +1,441 @@
-
 body {
   font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
-  background-color: black;
+  margin: 0;
+  padding: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
 }
 
 .game {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 500px;
+  margin: 0 auto;
+  max-height: 95vh;
+  overflow: hidden;
 }
 
 .header {
-  border-bottom: 1px solid lightgray;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 50px;
+  margin-bottom: 5px;
 }
 
 .score {
   margin: 10px;
-  font-size: 25px;
+  font-size: 36px;
+  font-weight: 700;
   height: 50px;
-  width: 50px;
+  width: 100px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: azure;
-  font-family: cursive;
-}
-
-.buttons{
-  height: 60px;
-  width: auto;
-  border-radius: 5px;
-  justify-content: right;
   color: white;
-  background-color: rgb(0, 0, 145);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+.buttons {
+  height: 50px;
+  padding: 0 20px;
+  border-radius: 25px;
+  border: none;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
 }
 
-.buttons:disabled{
-  background-color: rgb(46, 46, 160);
-  cursor: default;
+.buttons:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
-.asideBar{
-  border-top: 1px solid lightgray;
+.buttons:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+.buttons:disabled {
+  background: linear-gradient(135deg, #999 0%, #666 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.asideBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  position : relative;
+  position: relative;
+  margin-top: 10px;
+  padding-top: 10px;
 }
 
-.asideBox{
-  margin-top: 15px;
-  width: 450px;
+.asideBox {
+  margin-top: 0;
+  width: 100%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .board {
-  margin: 20px;
+  margin: 10px;
   position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .squares {
   position: relative;
   z-index: 100;
-  display: grid;  
+  display: grid;
 }
 
 .square {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 5px;
-  border-radius: 5px;
-  font-size: 25px;
+  margin: 2px;
+  border-radius: 6px;
+  font-size: 18px;
   color: white;
-  font-family: Arial, Helvetica, sans-serif;
-  text-shadow: -1px 0 1px rgb(24, 24, 24), 0 1px 1px rgb(24, 24, 24), 1px 0 1px rgb(24, 24, 24), 0 -1px 1px rgb(24, 24, 24);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.square:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.square.selected {
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.square.last-selected {
+  border: 6px solid #ff6b35;
+  box-shadow: 0 0 30px rgba(255, 107, 53, 1), 0 0 50px rgba(255, 107, 53, 0.8),
+    0 0 70px rgba(255, 107, 53, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  transform: scale(1.25);
+  z-index: 20;
+  animation: lastBlockPulse 1.2s infinite;
+}
+
+@keyframes lastBlockPulse {
+  0% {
+    box-shadow: 0 0 30px rgba(255, 107, 53, 1), 0 0 50px rgba(255, 107, 53, 0.8),
+      0 0 70px rgba(255, 107, 53, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 107, 53, 1), 0 0 70px rgba(255, 107, 53, 1),
+      0 0 100px rgba(255, 107, 53, 0.8),
+      inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(255, 107, 53, 1), 0 0 50px rgba(255, 107, 53, 0.8),
+      0 0 70px rgba(255, 107, 53, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes lastBlockGlow {
+  0% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.6),
+      0 0 70px rgba(255, 215, 0, 0.4), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 0 70px rgba(255, 215, 0, 0.8),
+      0 0 100px rgba(255, 215, 0, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.6),
+      0 0 70px rgba(255, 215, 0, 0.4), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  }
 }
 
 .rise {
   margin: 1px;
-  border-style:inset;
-  border-color: goldenrod;
+  border: 6px solid #ffd700 !important;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.6),
+    0 0 70px rgba(255, 215, 0, 0.4), inset 0 3px 6px rgba(255, 255, 255, 0.4);
+  transform: scale(1.15);
+  z-index: 20;
+  animation: lastBlockGlow 1.5s infinite;
 }
 
 .riseOnHover:hover {
   margin: 2px;
 }
 
+/* Smooth falling animation for blocks */
+.square.falling {
+  animation: fallDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fallDown {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Add a subtle bounce effect for new blocks appearing */
+.square.appearing {
+  animation: appearWithBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes appearWithBounce {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Custom Toast Styling */
+.custom-toast {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.95) 0%,
+    rgba(118, 75, 162, 0.9) 100%
+  ) !important;
+  backdrop-filter: blur(20px) !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 215, 0, 0.3) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  padding: 16px 20px !important;
+  margin: 8px !important;
+  min-height: 50px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.custom-toast::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ff6b35, #ffd700);
+  border-radius: 15px 15px 0 0;
+}
+
+.custom-toast-body {
+  color: white !important;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.custom-toast-progress {
+  background: linear-gradient(90deg, #ffd700, #ff6b35, #ffd700) !important;
+  height: 3px !important;
+  border-radius: 0 0 15px 15px !important;
+}
+
+/* Toast type specific styling */
+.Toastify__toast--warning {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 193, 7, 0.95) 0%,
+    rgba(255, 193, 7, 0.9) 100%
+  ) !important;
+  color: #333 !important;
+}
+
+.Toastify__toast--warning::before {
+  background: linear-gradient(90deg, #ffc107, #ffd54f, #ffc107) !important;
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(
+    135deg,
+    rgba(40, 167, 69, 0.95) 0%,
+    rgba(40, 167, 69, 0.9) 100%
+  ) !important;
+  color: white !important;
+}
+
+.Toastify__toast--success::before {
+  background: linear-gradient(90deg, #28a745, #4caf50, #28a745) !important;
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(
+    135deg,
+    rgba(220, 53, 69, 0.95) 0%,
+    rgba(220, 53, 69, 0.9) 100%
+  ) !important;
+  color: white !important;
+}
+
+.Toastify__toast--error::before {
+  background: linear-gradient(90deg, #dc3545, #f44336, #dc3545) !important;
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(
+    135deg,
+    rgba(23, 162, 184, 0.95) 0%,
+    rgba(23, 162, 184, 0.9) 100%
+  ) !important;
+  color: white !important;
+}
+
+.Toastify__toast--info::before {
+  background: linear-gradient(90deg, #17a2b8, #2196f3, #17a2b8) !important;
+}
+
+/* Toast close button styling */
+.Toastify__close-button {
+  color: rgba(255, 255, 255, 0.8) !important;
+  opacity: 0.8 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+  color: rgba(255, 255, 255, 1) !important;
+  transform: scale(1.1) !important;
+}
+
 .horizontalConnectors {
   position: absolute;
   top: 0;
   margin: 0 40px;
-  display: grid;  
+  display: grid;
 }
 
 .verticalConnectors {
   position: absolute;
   top: 0;
   margin: 40px 0;
-  display: grid;  
+  display: grid;
 }
 
-.slashConnectors, .backslashConnectors {
+.slashConnectors,
+.backslashConnectors {
   position: absolute;
   top: 0;
   margin: 40px 40px;
-  display: grid;  
+  display: grid;
 }
 
 .connector {
   display: flex;
   align-items: center;
-  justify-content: center;  
+  justify-content: center;
 }
 
 .connectorLine {
   flex-grow: 1;
   height: 8px;
+  background: transparent !important;
+  border-radius: 4px;
+  box-shadow: none;
+  border: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.connectorLine[style*="background"] {
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700) !important;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 1), 0 0 25px rgba(255, 215, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  opacity: 1;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 1), 0 0 25px rgba(255, 215, 0, 0.6),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 1), 0 0 35px rgba(255, 215, 0, 0.8),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 1), 0 0 25px rgba(255, 215, 0, 0.6),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  }
 }
 
 .connectorLine.vertical {
